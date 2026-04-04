@@ -35,7 +35,7 @@ body { font-family: 'Noto Sans JP', sans-serif; background: var(--paper); color:
   display: flex; align-items: center; justify-content: space-between; padding: 0 14px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
-.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-left { display: flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; flex-shrink: 1; }
 .topbar-title { font-family: 'Shippori Mincho', serif; font-size: 17px; font-weight: 800; color: var(--accent-light); letter-spacing: 0.06em; }
 .topbar-right { display: flex; align-items: center; gap: 8px; }
 .tb-icon-btn {
@@ -224,7 +224,43 @@ textarea { resize:vertical; min-height:78px; }
 .btn-add-log { background:var(--success); color:white; border:none; border-radius:var(--radius-sm); padding:8px 13px; font-size:12px; cursor:pointer; font-family:'Noto Sans JP',sans-serif; white-space:nowrap; }
 .btn-add-log:hover { opacity:0.85; }
 
-/* MODAL */
+/* 星フィルター */
+.star-filter { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.star-filter-btn {
+  background:white; border:1.5px solid var(--border); border-radius:20px;
+  padding:5px 12px; font-size:12px; cursor:pointer; transition:all 0.2s;
+  font-family:'Noto Sans JP',sans-serif; color:var(--muted);
+  display:flex; align-items:center; gap:4px;
+}
+.star-filter-btn:hover { border-color:var(--accent); color:var(--accent); }
+.star-filter-btn.active { background:var(--accent); border-color:var(--accent); color:white; font-weight:600; }
+.star-filter-btn .s { color:var(--star-on); font-size:13px; }
+.star-filter-btn.active .s { color:white; }
+
+/* 営業記録 */
+.sales-list { display:flex; flex-direction:column; gap:10px; }
+.sales-item {
+  background:var(--paper); border:1px solid var(--border); border-radius:var(--radius-sm);
+  padding:12px; position:relative;
+}
+.sales-item.contracted { border-left:4px solid var(--success); background:#f8fff8; }
+.sales-item.not-contracted { border-left:4px solid var(--muted); }
+.sales-item-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.sales-date { font-size:12px; font-weight:600; color:var(--accent); }
+.sales-badge {
+  font-size:10px; padding:2px 8px; border-radius:10px; font-weight:700;
+}
+.badge-ok { background:#d4edda; color:var(--success); }
+.badge-ng { background:#f0f0f0; color:var(--muted); }
+.sales-content { font-size:12px; color:var(--ink); line-height:1.5; margin-bottom:6px; }
+.sales-contract { font-size:12px; color:var(--success); font-weight:600; }
+.sales-del { position:absolute; top:8px; right:8px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; }
+.sales-del:hover { color:var(--danger); }
+
+.sales-form { background:var(--paper-warm); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; margin-top:10px; }
+.sales-form-title { font-size:11px; font-weight:700; color:var(--ink); margin-bottom:10px; letter-spacing:0.05em; }
+.contracted-fields { display:none; margin-top:8px; }
+.contracted-fields.show { display:block; }
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:300; align-items:center; justify-content:center; }
 .modal-overlay.open { display:flex; }
 .modal-box { background:white; border-radius:14px; padding:26px; width:92%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.25); position:relative; max-height:88vh; overflow-y:auto; }
@@ -242,15 +278,20 @@ textarea { resize:vertical; min-height:78px; }
 .toast.error { border-left:4px solid var(--danger); }
 
 /* COMPANY BRANDING */
-.topbar-company { display:flex; flex-direction:column; line-height:1.2; }
+.topbar-company { display:flex; flex-direction:column; line-height:1.15; min-width:0; flex-shrink:0; }
 .company-name {
-  font-family:'Shippori Mincho',serif; font-size:18px; font-weight:800;
-  letter-spacing:0.12em; color:white;
-  text-shadow: 0 0 12px rgba(232,168,78,0.7), 0 1px 3px rgba(0,0,0,0.5);
+  font-family:'Shippori Mincho',serif; font-size:15px; font-weight:800;
+  letter-spacing:0.06em; white-space:nowrap;
   background: linear-gradient(135deg, #fff 0%, var(--accent-light) 50%, #fff 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip:text;
 }
-.company-sub { font-size:10px; color:rgba(255,255,255,0.55); letter-spacing:0.15em; font-weight:400; }
+.company-sub { font-size:9px; color:rgba(255,255,255,0.52); letter-spacing:0.08em; font-weight:400; white-space:nowrap; }
+
+@media (max-width: 380px) {
+  .company-name { font-size:13px; }
+  .company-sub { display:none; }
+  .tb-btn { padding:5px 9px; font-size:11px; }
+}
 
 /* WELCOME BANNER */
 .welcome-banner {
@@ -314,7 +355,7 @@ textarea { resize:vertical; min-height:78px; }
       </svg>
     </button>
     <img src="data:image/png;base64,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" alt="むたせい" style="height:44px;width:auto;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));">
-    <img src="data:image/png;base64,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" alt="優愛ホームロゴ" style="height:38px;width:auto;object-fit:contain;border-radius:6px;background:white;padding:2px 4px;">
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAJZ0lEQVR42l1YXY+dVRV+nrX3OfPRTqcfFLQfthRbNEhQAsYbooGANmhEjTGReGW89gd4471/wGhiuDRBQqCRzxQohQApmlKMFQQq2A+m7bSd6XRmznn3Wo8Xe79nGs/FeWfO+757rb0+nudZm3/47W9IAqAZ21+UBAASSTMDCQggJFj/UKIFJckoCvVnAITBDO0NtAcAAQCNBCQYAKJ/IiIUgvolCFJttWYOam9IcCoMogRAEASCYCCKQhQAkdWB6okEgkZmkmDbqiRFoHc/M1UfJAmYxAMQRHgAUCIDJGFgc0ggQTiAyR76K6QAjMyqIa3rkuMIFiAZzUIyQM1PEhCbV6EwS5ZMBoUUoZsM1GyoGVKLeY0ZBCCADCj6SAvNHRIICSFa/7xEVdPuzIPh+nh09JXjq+tr33vwO1s2z3kpyAl93Foy0a8kgdUBq97lgII3OcPqBUAEIMqAtgZaJpiH5z4/98yLR0/88wOXzi1c/On3H9n9xT0eAFWzDUoBQEYaKcBIqRULgfTogw/09UXrkz1JFY0iSBhNQlAp2flPT//xz0+/f+YsaDQ7f2nxP2fOHNp7y9btO2vEWbfLWgstiaiFR4MIwjxCUkgbBlWLCSQMMDCoDi5LKuu4cvz8B899dmk5p3xw3567DuzPeXDmwpXP3jvCK+8gHEg1r+27XiUoiL4SwNwqWVBSMgNAVtdaiYYimeXBsNw4h4vH2J01FrNE6ieHH04pf/T7P0XOUxxp4ZjWLk/v+ranrVHG7AFAYi1PCVSAICy33EaIqJVVLROEUOQ5D4uXN99489MPTzxw4MbBvdPFPaShMadUYQchmCXj4oX3Tpy+tPvOh/bv3+clQACGVkCEIAQh0nJEtPC7YKwtxL6Sh8OpK1eu/vXlV94++Y/1iFifPri3NaSZQQp3gKDIANPzfx+9ePrDve8s/OjwI/ffe58QoWJMteowQSMot5BSZhbhRpA5AAPzcPjhvz966rmXPj6/IKYtw3RolwkRgQqpBCOihjIB4b5pEGb53NUbT/zl2fOfLxx++KGpqalSilnqIUAKhXtunW4UxFBOGUaQHjr++htHXn19aXVM2u07px/7Gr76JYUCFZqIlHMZjTw8kZmE8N1vTNmQL5waXx+XZ44eX7y29Nijh7fNz0sOEDD0zZmh2utUBJPJKCmntLK8/NIbby2trs9MTX3r6/ccvm/njvU3PcYAHYpQspSSuXtdK2ejaXrAH3xzy+4DB5989fSla0uvvXtybXX9l7/4+fT0MCSER8hSImCosBJBkjkrGUjQSjgtEbjv7jsf//EPt87PdxGkEewKAqJxajilUIRIIAIIQXLcf++9v3r8Z7t3bqOl8xcvr6+vtU5JZikZSVqWVYy0m5kHYEREhIBtm+dysjV3q4kNeUFi6tz/durU8spKtJqtzS/SStGBffsP7N515vzFPMhWu1RqVghCucFlA60JuMs9IqLSSUjGytIU4C4B41KefP6oEWZmPdpDFGGWQvJQQ0D0HdpjVF9UFaFb6zbIruQMIKVEGgXSAJM4O0RSJW4LNKN92CpUhRQl+tKfKAsSbBiZRTav1BRB9aMUDwWAQc4EQm4KWnb5Pbfz17PDUSHIU2f92MfFMlOtVopMhE1w12hsGqD6V31BhmA0Rt1MZRAAUER9c5BT7VTSyBA0O2t3HxCFqWFa7XDso85oNEhRORs06+nJmngyyHs5VNupYUlVBhuCa8LuRKXUACq5QcJYBMTAuDRHaSAJOdV0Rc1lw1RsyBxAkKynC0CBCEGAIsJbipBTIg1yKSDWOhwOWl8EospDQgoRFI0wqdVmtSVFVSqVrEUYNiwTAFwIwWPcjSs4pJxap4khIcyFC5fi+lpSngomAEYYq0ZyIKmXZ/WWEB6lhrCysACDEBMqrE0REtB1nSphmEmK8BZR04kPRr87svLUu9Pdzsew5S7AjTRKRDBVpVK8FC9Vz5pZrfVeEag5xL4CmzCDIqKE18Y3M0UwSrsHfXKRi2N8crmM8IXB1I7WpiACAgKSgkL0fSwpwWqXA5SgUBbqP6rsL4IVGWtAyB4ZHAiwRFTpgmECUbpu3As1Cj3jgwBcNf1wL124JCL68QDWRoam8wFSYErJQ8U9pZRTrnjSpBoY0eAghNrrZqApREWPnDHRT2aWQG1MGiRAQ7RKq9ILUUPAgCKCYEoJUIO8sD4dMGvau+JfLTIXFZJQvHipPtHM6ihEUm06QG6xxMbkUyeNUkoAJEbd+Mbqqo87GytlZLMu2CybFY/62iBxkGUQB5amZ92n64JRMV8bmFgldi6KBBrY6CUa1nZdMTLAI68cf+3tExyvmPtgsG7Ef68pWbp0bfmJJ5++sHDRaNdGevZkt20WlpCGqzNnT3TKV6+vNHzuOaCiZ4WRrMY5N4l5AdBoNA5p1I0vXL5yAf/3oZFLK6tvnXyfsGS2Oo6X/9UBMhqwmPgCQMvZzFJKljLFySxY+yrbZKaZDHVAhG7buePOfXskRSik8OIeHh6h4lGFZs1XcfcIWgBQuIBS9zceB+BekhEGMvVDFCTlEiUjpZQ3zBJdKV85ePDQlw8oICHk7dIG2QiFe7g7wFKKh7uHR5RSIlRKV0rp3Efj8a5bbyVNPQ1P5s0ssXjIwmCN2KwVfcIgDWxjtiXBRnNmpBlvGpvZT2mVn8wSAFDu7h5GqxGebC+nnNlPDACYrM07AKDrK9dJuvvU9HSUYjTQBoPcjLU+SYBGo5GZzUzPCCItVNzdqCpP6ke1RUkzy5SMFIhkDb7bOYEs5aVr1z5fWNi6dX7z7NzVK4tbt82T6fqNG1033r59fm5+/trlq6urazDOzM6YoVv3TXNzo25cSpGP77jjUEqDBos9elQQzZ13wzRoITKbHH0EIGlufh5mOeerFy9t3rZt6fpSssFotOZe1ldsx7Zbuq4bj0bFu+Fw2Clu3FhbWFxMCcPBcHZ6NqXUjPWHGfUQBWDOaUCQZgFEhAmCioGyCJ+dmd08M4uIrXNzg6npbrwd4HQeACjhg+HgS/v2kRYRy8tLg5z37dnsCpLXV5bd68TRhmXShA2UygCCMDbIAiFN+svqQQ9TGuQkxXBqpt4jMLABoJyyJEtp5623kfVlI7Fp06ZGcx5tqxG0RGMF8lxFZmyQ5aTV2olQhZuKukJQVKWfuglF4yIvJI0mebXUD/qNgsk+j0ZI/wNPR54ETQcUagAAAABJRU5ErkJggg==" alt="優愛ホームロゴ" style="height:32px;width:auto;object-fit:contain;border-radius:5px;background:white;padding:2px 3px;flex-shrink:0;">
     <div class="topbar-company">
       <span class="company-name">優愛ホーム</span>
       <span class="company-sub">顧客管理システム</span>
@@ -363,6 +404,15 @@ textarea { resize:vertical; min-height:78px; }
       <div class="main-search-wrap">
         <span class="main-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
         <input type="text" class="main-search" id="cardSearch" placeholder="氏名・住所・メモで検索…" oninput="filterCards()">
+      </div>
+      <!-- 星フィルター -->
+      <div class="star-filter">
+        <button class="star-filter-btn active" onclick="setStarFilter(0, this)">すべて</button>
+        <button class="star-filter-btn" onclick="setStarFilter(5, this)"><span class="s">★★★★★</span> 最優良</button>
+        <button class="star-filter-btn" onclick="setStarFilter(4, this)"><span class="s">★★★★</span> 優良</button>
+        <button class="star-filter-btn" onclick="setStarFilter(3, this)"><span class="s">★★★</span> 良好</button>
+        <button class="star-filter-btn" onclick="setStarFilter(2, this)"><span class="s">★★</span> 普通</button>
+        <button class="star-filter-btn" onclick="setStarFilter(1, this)"><span class="s">★</span> 要注意</button>
       </div>
       <div class="cards-grid" id="cardsGrid"></div>
     </div>
@@ -472,6 +522,58 @@ textarea { resize:vertical; min-height:78px; }
           </div>
         </div>
       </div>
+
+      <!-- 営業記録 -->
+      <div class="form-section">
+        <div class="section-title">💼 営業記録</div>
+        <div class="section-body">
+          <div class="sales-list" id="salesList"></div>
+          <!-- 営業記録入力フォーム -->
+          <div class="sales-form">
+            <div class="sales-form-title">＋ 営業記録を追加</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>営業日</label>
+                <input type="date" id="salesDate">
+              </div>
+              <div class="form-group">
+                <label>担当者名</label>
+                <input type="text" id="salesStaff" placeholder="例：田中">
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>セールス内容</label>
+              <textarea id="salesContent" placeholder="例：外壁塗装のご提案をしました" rows="2"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>成約</label>
+              <div style="display:flex;gap:12px;margin-top:4px;">
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;color:var(--ink);cursor:pointer;">
+                  <input type="radio" name="salesResult" value="yes" id="salesYes" onchange="toggleContractFields(true)"> ✅ 成約あり
+                </label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:400;color:var(--ink);cursor:pointer;">
+                  <input type="radio" name="salesResult" value="no" id="salesNo" checked onchange="toggleContractFields(false)"> ❌ 成約なし
+                </label>
+              </div>
+            </div>
+            <!-- 成約時のみ表示 -->
+            <div class="contracted-fields" id="contractedFields">
+              <div class="form-group" style="margin-bottom:10px;">
+                <label>仕事内容</label>
+                <input type="text" id="salesJobType" placeholder="例：外壁塗装・屋根工事">
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <label>契約金額</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <input type="text" id="salesAmount" placeholder="例：1,500,000" style="flex:1;">
+                  <span style="font-size:13px;color:var(--muted);white-space:nowrap;">円</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:4px;" onclick="addSalesRecord()">💼 営業記録を追加</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -510,10 +612,41 @@ textarea { resize:vertical; min-height:78px; }
       <button class="btn btn-danger" style="font-size:12px;" onclick="disconnectFB()">🔌 切断する</button>
     </div>
     <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:14px;">
-      <div style="font-size:12px;font-weight:600;margin-bottom:9px;">💾 手動バックアップ</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-secondary" onclick="exportData()">📥 JSONエクスポート</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📂 JSONインポート</button>
+      <div style="font-size:12px;font-weight:600;margin-bottom:9px;">💾 データの共有・バックアップ</div>
+
+      <!-- エクスポート -->
+      <div style="background:#f0fff4;border:1px solid #b0d4b0;border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--success);margin-bottom:6px;">📤 送る側（エクスポート）</div>
+        <div style="font-size:11px;color:var(--ink);line-height:1.8;">
+          ① 「JSONエクスポート」をタップ<br>
+          ② ダウンロードされたファイルをLINEで送る<br>
+          　 LINEの「＋」→「ファイル」→ファイルを選ぶ
+        </div>
+        <button class="btn btn-secondary" style="margin-top:8px;font-size:12px;" onclick="exportData()">📥 JSONエクスポート</button>
+      </div>
+
+      <!-- インポート -->
+      <div style="background:#f0f4ff;border:1px solid #a8c4f5;border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:#1a56c4;margin-bottom:6px;">📲 受け取る側（インポート）</div>
+        <div style="font-size:11px;color:var(--ink);line-height:1.8;">
+          <b>方法①：ファイルを選んでインポート</b><br>
+          　LINEで受け取ったファイルを保存してから選ぶ<br><br>
+          <b>方法②：URLを貼り付けてインポート</b><br>
+          　LINEのファイルを長押し→「リンクをコピー」<br>
+          　下のボックスに貼り付けて「読み込む」をタップ
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" style="font-size:12px;" onclick="document.getElementById('importFile').click()">📂 ファイルを選ぶ</button>
+        </div>
+        <!-- URLインポート -->
+        <div style="margin-top:10px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:5px;">URLから読み込む（GoogleドライブのリンクなどOK）</div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="importUrlInput" placeholder="https://... リンクを貼り付け" style="flex:1;font-size:12px;padding:7px 9px;">
+            <button class="btn btn-primary" style="font-size:12px;white-space:nowrap;" onclick="importFromUrl()">読み込む</button>
+          </div>
+          <div id="importUrlStatus" style="font-size:11px;margin-top:5px;min-height:15px;"></div>
+        </div>
       </div>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
@@ -669,10 +802,16 @@ function renderCards(list) {
     const n = c.stars||0;
     const last = c.logs&&c.logs.length ? [...c.logs].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
     const addr = [c.pref,c.city,c.street].filter(Boolean).join(' ');
+    const contracted = (c.sales||[]).filter(s=>s.result==='yes');
+    const totalAmt = contracted.reduce((sum,s)=>sum+Number((s.amount||'0').replace(/,/g,'')),0);
+    const salesBadge = contracted.length > 0
+      ? `<span style="font-size:10px;background:#d4edda;color:var(--success);padding:2px 7px;border-radius:8px;font-weight:600;">✅ 成約${contracted.length}件${totalAmt?'　'+totalAmt.toLocaleString()+'円':''}</span>`
+      : '';
     return `<div class="cust-card" onclick="selectCustomer('${c.id}')">
       <div class="card-name">${c.name||'(名前なし)'}</div>
       <div class="card-kana">${c.kana||'　'}</div>
       <div class="card-addr">${addr||'住所未登録'}</div>
+      ${salesBadge ? '<div style="margin-bottom:6px;">'+salesBadge+'</div>' : ''}
       <div class="card-bottom">
         <div><span class="card-stars-on">${'★'.repeat(n)}</span><span class="card-stars-off">${'☆'.repeat(5-n)}</span></div>
         <div class="card-log">${last?'📅 '+fmtDate(last.date):''}</div>
@@ -681,9 +820,24 @@ function renderCards(list) {
   }).join('');
 }
 
+let currentStarFilter = 0; // 0=すべて
+
+function setStarFilter(n, btn) {
+  currentStarFilter = n;
+  document.querySelectorAll('.star-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterCards();
+}
+
 function filterCards() {
   const q = document.getElementById('cardSearch').value.trim().toLowerCase();
-  renderCards(q ? customers.filter(c=>(c.name||'').includes(q)||(c.kana||'').includes(q)||(c.pref||'').includes(q)||(c.city||'').includes(q)||(c.street||'').includes(q)||(c.comment||'').includes(q)) : customers);
+  let list = customers;
+  if (q) list = list.filter(c =>
+    (c.name||'').includes(q)||(c.kana||'').includes(q)||(c.pref||'').includes(q)||
+    (c.city||'').includes(q)||(c.street||'').includes(q)||(c.comment||'').includes(q)
+  );
+  if (currentStarFilter > 0) list = list.filter(c => (c.stars||0) === currentStarFilter);
+  renderCards(list);
 }
 
 // ── 画面切り替え ──
@@ -729,7 +883,11 @@ function loadForm(c) {
   document.getElementById('addrChangeBlock').style.display = 'none';
   pendingChange = null;
   renderLogs(c.logs||[]);
+  renderSales(c.sales||[]);
   document.getElementById('logDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('salesDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('salesNo').checked = true;
+  document.getElementById('contractedFields').classList.remove('show');
 }
 
 // ── 保存・削除 ──
@@ -746,7 +904,7 @@ function saveCustomer() {
     city:    document.getElementById('f_city').value.trim(),
     street:  document.getElementById('f_street').value.trim(),
     comment: document.getElementById('f_comment').value.trim(),
-    stars: currentStars, logs: tempLogs,
+    stars: currentStars, logs: tempLogs, sales: tempSales,
   };
   if (isNew) { customers.push(data); currentId=data.id; isNew=false; }
   else { const i=customers.findIndex(x=>x.id===data.id); if(i>=0) customers[i]=data; else customers.push(data); }
@@ -921,7 +1079,116 @@ function disconnectFB(){
   showToast('🔌 Firebaseを切断しました','success');
 }
 
-// ── Share Modal ──
+// ── 営業記録 ──
+let tempSales = [];
+
+function toggleContractFields(show) {
+  document.getElementById('contractedFields').classList.toggle('show', show);
+}
+function renderSales(sales) { tempSales = [...sales]; redrawSales(); }
+function redrawSales() {
+  const el = document.getElementById('salesList');
+  if (!tempSales.length) { el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">まだ営業記録がありません</div>'; return; }
+  const sorted = [...tempSales].sort((a,b)=>b.date.localeCompare(a.date));
+  el.innerHTML = sorted.map(s=>{
+    const ok = s.result==='yes';
+    const amt = s.amount ? '　契約金額：<b>'+Number((s.amount||'0').replace(/,/g,'')).toLocaleString()+' 円</b>' : '';
+    return `<div class="sales-item ${ok?'contracted':'not-contracted'}">
+      <button class="sales-del" onclick="delSales('${s.id}')">✕</button>
+      <div class="sales-item-header">
+        <span class="sales-date">📅 ${fmtDate(s.date)}</span>
+        ${s.staff?'<span style="font-size:11px;color:var(--muted);">担当：'+esc(s.staff)+'</span>':''}
+        <span class="sales-badge ${ok?'badge-ok':'badge-ng'}">${ok?'✅ 成約':'❌ 未成約'}</span>
+      </div>
+      ${s.content?'<div class="sales-content">'+esc(s.content)+'</div>':''}
+      ${ok&&s.jobType?'<div class="sales-contract">🏠 仕事内容：'+esc(s.jobType)+amt+'</div>':''}
+    </div>`;
+  }).join('');
+}
+function addSalesRecord() {
+  const date = document.getElementById('salesDate').value;
+  if (!date) { showToast('営業日を入力してください','error'); return; }
+  const result = document.querySelector('input[name="salesResult"]:checked').value;
+  tempSales.push({
+    id:genId(), date,
+    staff:   document.getElementById('salesStaff').value.trim(),
+    content: document.getElementById('salesContent').value.trim(),
+    result,
+    jobType: result==='yes'?document.getElementById('salesJobType').value.trim():'',
+    amount:  result==='yes'?document.getElementById('salesAmount').value.trim():'',
+  });
+  ['salesContent','salesStaff','salesJobType','salesAmount'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('salesNo').checked=true;
+  document.getElementById('contractedFields').classList.remove('show');
+  redrawSales();
+  showToast('💼 営業記録を追加しました','success');
+}
+function delSales(id){ tempSales=tempSales.filter(s=>s.id!==id); redrawSales(); }
+
+function importFromUrl() {
+  const url = document.getElementById('importUrlInput').value.trim();
+  const status = document.getElementById('importUrlStatus');
+  if (!url) { status.textContent = '⚠️ URLを入力してください'; status.style.color='var(--danger)'; return; }
+  status.textContent = '⏳ 読み込み中…'; status.style.color = 'var(--muted)';
+
+  // GoogleドライブのURLを直接ダウンロード形式に変換
+  let fetchUrl = url;
+  const gdrive = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (gdrive) {
+    fetchUrl = 'https://drive.google.com/uc?export=download&id=' + gdrive[1];
+  }
+
+  fetch(fetchUrl)
+    .then(function(r) {
+      if (!r.ok) throw new Error('取得失敗 ('+r.status+')');
+      return r.text();
+    })
+    .then(function(text) {
+      try {
+        const imp = JSON.parse(text);
+        if (!Array.isArray(imp)) throw new Error('形式が正しくありません');
+        let added=0, updated=0;
+        imp.forEach(function(c) {
+          const i = customers.findIndex(function(x){ return x.id===c.id; });
+          if (i>=0) { customers[i]=c; updated++; } else { customers.push(c); added++; }
+        });
+        saveLocal(); renderTree(customers); renderCards(customers);
+        status.textContent = '✅ 完了！追加'+added+'件・更新'+updated+'件';
+        status.style.color = 'var(--success)';
+        document.getElementById('importUrlInput').value = '';
+        showToast('✅ インポート完了：追加'+added+'件・更新'+updated+'件', 'success');
+        setTimeout(closeShareModal, 1500);
+      } catch(e) {
+        status.textContent = '❌ JSONの読み込みに失敗しました：' + e.message;
+        status.style.color = 'var(--danger)';
+      }
+    })
+    .catch(function(e) {
+      // CORS対策：プロキシ経由で再試行
+      status.textContent = '⏳ 別の方法で再試行中…'; status.style.color='var(--muted)';
+      fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(fetchUrl))
+        .then(function(r){ return r.text(); })
+        .then(function(text){
+          const imp = JSON.parse(text);
+          if (!Array.isArray(imp)) throw new Error('形式エラー');
+          let added=0, updated=0;
+          imp.forEach(function(c){
+            const i=customers.findIndex(function(x){return x.id===c.id;});
+            if(i>=0){customers[i]=c;updated++;}else{customers.push(c);added++;}
+          });
+          saveLocal(); renderTree(customers); renderCards(customers);
+          status.textContent='✅ 完了！追加'+added+'件・更新'+updated+'件';
+          status.style.color='var(--success)';
+          document.getElementById('importUrlInput').value='';
+          showToast('✅ インポート完了：追加'+added+'件・更新'+updated+'件','success');
+          setTimeout(closeShareModal,1500);
+        })
+        .catch(function(){
+          status.textContent='❌ 読み込めませんでした。ファイルを直接選んでインポートしてください';
+          status.style.color='var(--danger)';
+        });
+    });
+}
 function openShareModal(){document.getElementById('shareModal').classList.add('open');}
 function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
 function exportData(){
