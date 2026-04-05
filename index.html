@@ -1101,13 +1101,19 @@ function saveCustomer() {
   };
   if (isNew) { customers.push(data); currentId=data.id; isNew=false; }
   else { const i=customers.findIndex(x=>x.id===data.id); if(i>=0) customers[i]=data; else customers.push(data); }
+
+  // 常にローカルにも保存してUIを更新
+  saveLocal();
+  renderTree(customers);
+  renderCards(customers);
+  updateSalesBadge();
+
   if (fbRef) fbRef.child(data.id).set(data);
-  else { saveLocal(); renderTree(customers); }
+
   document.getElementById('deleteBtn').style.display='';
   document.getElementById('updateBtn').style.display='';
   document.getElementById('detailTitle').textContent=data.name;
   showToast('✅ 保存しました！', 'success');
-  // 一番上にスクロール（保存確認しやすく）
   document.getElementById('detailView').scrollTop = 0;
 }
 function deleteCustomer() {
@@ -1246,6 +1252,7 @@ function connectFirebase(config){
       renderTree(customers);
       if(!document.getElementById('detailView').classList.contains('visible')) renderCards(customers);
       const sub=document.getElementById('welcomeSub'); if(sub) sub.textContent=`全 ${customers.length} 件`;
+      updateSalesBadge();
     });
     document.getElementById('fbStatus').textContent='🟢 リアルタイム同期中';
     document.getElementById('fbStatus').style.color='#3d7a5f';
@@ -1275,7 +1282,12 @@ function disconnectFB(){
   showToast('🔌 Firebaseを切断しました','success');
 }
 
-// ── 営業記録 ──
+// ── 成約バッジ更新 ──
+function updateSalesBadge() {
+  const count = customers.reduce((sum,c)=>sum+((c.sales||[]).filter(s=>s.result==='yes').length),0);
+  const badge = document.getElementById('salesCountBadge');
+  if (badge) badge.textContent = count;
+}
 let tempSales = [];
 
 function toggleContractFields(show) {
@@ -1453,6 +1465,7 @@ window.addEventListener('appinstalled', function() {
   if(!sidebarOpen) document.getElementById('sidebar').classList.add('closed');
   renderTree(customers);
   renderCards(customers);
+  updateSalesBadge();
   const saved=localStorage.getItem('fb_config');
   if(saved){try{initFirebase(JSON.parse(saved));}catch(e){}}
   document.getElementById('shareModal').addEventListener('click',function(e){if(e.target===this)closeShareModal();});
