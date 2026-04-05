@@ -312,6 +312,37 @@ textarea { resize:vertical; min-height:78px; }
 .sales-form-title { font-size:11px; font-weight:700; color:var(--ink); margin-bottom:10px; letter-spacing:0.05em; }
 .contracted-fields { display:none; margin-top:8px; }
 .contracted-fields.show { display:block; }
+/* 下部保存バー */
+.bottom-save-bar {
+  position: sticky; bottom: 0;
+  background: white; border-top: 2px solid var(--border);
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  box-shadow: 0 -4px 16px rgba(26,26,46,0.1);
+  z-index: 10; margin: 0 -22px;
+}
+.btn-save-bottom {
+  background: var(--success); color: white;
+  font-size: 14px; padding: 11px 28px; font-weight: 700;
+  border-radius: var(--radius-sm); border: none;
+  box-shadow: 0 3px 12px rgba(61,122,95,0.35);
+  font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+  animation: pulse-save 2.5s ease-in-out infinite; transition: all 0.2s;
+}
+.btn-save-bottom:hover { opacity: 0.9; transform: translateY(-1px); }
+@keyframes pulse-save {
+  0%,100% { box-shadow: 0 3px 12px rgba(61,122,95,0.35); }
+  50%      { box-shadow: 0 3px 22px rgba(61,122,95,0.65); }
+}
+.btn-update {
+  background: #e8f0fe; color: #1a56c4;
+  border: 1.5px solid #a8c4f5; font-size: 13px;
+  padding: 10px 18px; font-weight: 600;
+  font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+  border-radius: var(--radius-sm); transition: all 0.2s;
+}
+.btn-update:hover { background: #1a56c4; color: white; }
+
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:300; align-items:center; justify-content:center; }
 .modal-overlay.open { display:flex; }
 .modal-box { background:white; border-radius:14px; padding:26px; width:92%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.25); position:relative; max-height:88vh; overflow-y:auto; }
@@ -631,6 +662,22 @@ textarea { resize:vertical; min-height:78px; }
           </div>
         </div>
       </div>
+
+      <!-- 下部 保存ボタン -->
+      <div class="bottom-save-bar">
+        <button class="btn btn-secondary" onclick="goBack()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>一覧に戻る
+        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-update" onclick="saveCustomer()" id="updateBtn" style="display:none;">
+            🔄 情報を更新する
+          </button>
+          <button class="btn btn-save-bottom" onclick="saveCustomer()">
+            💾 保存する
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <!-- 成約履歴ビュー -->
@@ -1006,6 +1053,7 @@ function selectCustomer(id) {
   if (!c) return;
   loadForm(c);
   document.getElementById('deleteBtn').style.display = '';
+  document.getElementById('updateBtn').style.display = '';  // 更新ボタン表示
   document.getElementById('detailTitle').textContent = c.name||'顧客詳細';
   showDetail();
   renderTree(customers);
@@ -1014,6 +1062,7 @@ function newCustomer() {
   currentId = null; isNew = true;
   loadForm({});
   document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('updateBtn').style.display = 'none'; // 新規は非表示
   document.getElementById('detailTitle').textContent = '新規顧客登録';
   showDetail();
 }
@@ -1055,8 +1104,11 @@ function saveCustomer() {
   if (fbRef) fbRef.child(data.id).set(data);
   else { saveLocal(); renderTree(customers); }
   document.getElementById('deleteBtn').style.display='';
+  document.getElementById('updateBtn').style.display='';
   document.getElementById('detailTitle').textContent=data.name;
-  showToast('✅ 保存しました','success');
+  showToast('✅ 保存しました！', 'success');
+  // 一番上にスクロール（保存確認しやすく）
+  document.getElementById('detailView').scrollTop = 0;
 }
 function deleteCustomer() {
   if (!currentId||!confirm('この顧客を削除しますか？')) return;
