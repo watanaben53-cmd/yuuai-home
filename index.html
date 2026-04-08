@@ -1570,27 +1570,73 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g
 
 // ── PWA インストール ──
 let deferredPrompt = null;
+
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   deferredPrompt = e;
-  const banner = document.getElementById('installBanner');
-  if (banner) banner.style.display = 'flex';
+  // 24時間以内に閉じていなければバナー表示
+  const closed = localStorage.getItem('installBannerClosed');
+  if (!closed || Date.now() - parseInt(closed) > 86400000) {
+    const banner = document.getElementById('installBanner');
+    if (banner) banner.style.display = 'flex';
+  }
 });
-document.addEventListener('DOMContentLoaded', function() {
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.addEventListener('click', function() {
-    if (!deferredPrompt) return;
+
+function installApp() {
+  if (deferredPrompt) {
+    // Android Chrome：プロンプトを表示
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(function() {
+    deferredPrompt.userChoice.then(function(result) {
       deferredPrompt = null;
       document.getElementById('installBanner').style.display = 'none';
+      if (result.outcome === 'accepted') {
+        showToast('🎉 インストールしました！', 'success');
+      }
     });
-  });
-});
-window.addEventListener('appinstalled', function() {
+  } else {
+    // iOS Safari または既にインストール済みの場合
+    const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+    if (isIos) {
+      document.getElementById('installBannerIos').style.display = 'flex';
+      document.getElementById('installBanner').style.display = 'none';
+    } else {
+      showToast('ブラウザのメニュー「ホーム画面に追加」からインストールできます', 'success');
+    }
+  }
+}
+
+function closeInstallBanner() {
   document.getElementById('installBanner').style.display = 'none';
-  showToast('✅ ホーム画面に追加しました！', 'success');
+  localStorage.setItem('installBannerClosed', Date.now());
+}
+
+window.addEventListener('appinstalled', function() {
+  const b = document.getElementById('installBanner');
+  if (b) b.style.display = 'none';
+  showToast('🎉 アプリをインストールしました！', 'success');
 });
+
+// iOS Safari 向け（beforeinstallpromptが発火しない）
+(function checkIos() {
+  const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const closed = localStorage.getItem('installBannerClosed');
+  if (isIos && !isStandalone && (!closed || Date.now() - parseInt(closed) > 86400000)) {
+    setTimeout(function() {
+      const banner = document.getElementById('installBannerIos');
+      if (banner) banner.style.display = 'flex';
+    }, 2000);
+  }
+})();
+
+// Service Worker 登録（GitHub Pages対応）
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(reg) { console.log('SW registered'); })
+      .catch(function(err) { console.log('SW error:', err); });
+  });
+}
 (function(){
   const sb=localStorage.getItem('sidebarOpen');
   sidebarOpen = sb!=='0';
