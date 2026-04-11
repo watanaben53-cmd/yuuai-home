@@ -13,15 +13,6 @@
 <meta name="apple-mobile-web-app-title" content="経費管理">
 <link rel="apple-touch-icon" href="icon-192.png">
 
-<!-- 更新通知バナー -->
-<div id="update-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1C1C1E;color:#fff;padding:14px 20px;z-index:9999;display:none;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 12px rgba(0,0,0,0.2)">
-  <div style="display:flex;align-items:center;gap:10px">
-    <div style="width:8px;height:8px;border-radius:50%;background:#F5C800;flex-shrink:0"></div>
-    <span style="font-size:13px">新しいバージョンが利用可能です</span>
-  </div>
-  <button onclick="applyUpdate()" style="background:#F5C800;color:#1C1C1E;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">今すぐ更新</button>
-</div>
-
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -294,6 +285,15 @@ tr:hover td { background: #fafbfc; }
 </style>
 </head>
 <body>
+
+<!-- 更新通知バナー -->
+<div id="update-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1C1C1E;color:#fff;padding:14px 20px;z-index:9999;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 12px rgba(0,0,0,0.2)">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div style="width:8px;height:8px;border-radius:50%;background:#F5C800;flex-shrink:0"></div>
+    <span style="font-size:13px">新しいバージョンが利用可能です</span>
+  </div>
+  <button onclick="applyUpdate()" style="background:#F5C800;color:#1C1C1E;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">今すぐ更新</button>
+</div>
 
 <!-- サイドバーオーバーレイ（モバイル） -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
@@ -1335,6 +1335,16 @@ let newWorker = null;
 
 function registerSW() {
   if (!('serviceWorker' in navigator)) return;
+
+  // 古いService Workerをすべて解除してキャッシュをクリア（白画面対策）
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.unregister());
+  });
+  caches.keys().then(keys => {
+    keys.forEach(key => caches.delete(key));
+  });
+
+  // 新しいSWを登録
   navigator.serviceWorker.register('./sw.js').then(reg => {
     swRegistration = reg;
     reg.addEventListener('updatefound', () => {
@@ -1361,16 +1371,17 @@ function applyUpdate() {
   if (newWorker) {
     newWorker.postMessage({ action: 'skipWaiting' });
   } else {
+    caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
     window.location.reload(true);
   }
 }
 
 function checkUpdate() {
+  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
   if (swRegistration) {
     swRegistration.update().then(() => {
-      if (!newWorker) {
-        alert('すでに最新バージョンです！');
-      }
+      alert('最新版を確認しました。ページを再読み込みします。');
+      window.location.reload(true);
     });
   } else {
     window.location.reload(true);
