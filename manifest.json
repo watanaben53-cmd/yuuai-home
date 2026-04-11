@@ -1,0 +1,24 @@
+{
+  "name": "経費管理 | 優愛ホーム",
+  "short_name": "経費管理",
+  "description": "優愛ホーム 社内経費管理システム",
+  "start_url": "./keihi.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#185FA5",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
