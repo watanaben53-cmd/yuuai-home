@@ -194,7 +194,15 @@ tr:hover td { background: #fafbfc; }
 .empty-state p { font-size: 14px; }
 
 /* ===== MOBILE ===== */
-@media (max-width: 768px) {
+@media print {
+  body { background: #fff !important; }
+  .sidebar, .topbar, .modal-overlay { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .content { padding: 0 !important; }
+  .panel { display: none !important; }
+  #print-area { display: block !important; }
+}
+#print-area { display: none; }
   .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
   .sidebar.open { transform: translateX(0); }
   .main { margin-left: 0; }
@@ -242,9 +250,17 @@ tr:hover td { background: #fafbfc; }
     科目別集計
   </a>
   <div class="sidebar-section">管理</div>
+  <a class="nav-item" onclick="showPanel('staff')" href="#">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="6" r="3"/><path d="M2 17c0-3.3 2.7-6 6-6"/><circle cx="15" cy="12" r="2.5"/><path d="M11 18c0-2.2 1.8-4 4-4h1"/></svg>
+    従業員登録
+  </a>
   <a class="nav-item" onclick="showPanel('accounts')" href="#">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 10h6M7 7h4M7 13h5"/></svg>
     勘定科目一覧
+  </a>
+  <a class="nav-item" onclick="printReport()" href="#">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="2" width="10" height="6" rx="1"/><rect x="3" y="8" width="14" height="8" rx="1"/><rect x="6" y="13" width="8" height="5" rx="1"/><circle cx="15" cy="11" r="0.8" fill="currentColor"/></svg>
+    印刷（A4）
   </a>
   <a class="nav-item" onclick="exportCSV()" href="#">
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3v10M6 9l4 4 4-4"/><path d="M4 15h12v2H4z"/></svg>
@@ -372,7 +388,9 @@ tr:hover td { background: #fafbfc; }
           </div>
           <div class="form-group">
             <label>担当者名</label>
-            <input type="text" id="f-staff" placeholder="例：渡部 望">
+            <select id="f-staff">
+              <option value="">選択してください</option>
+            </select>
           </div>
           <div class="form-group full">
             <label>摘要・内容 *</label>
@@ -435,6 +453,19 @@ tr:hover td { background: #fafbfc; }
             <tbody id="sum-body"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== 従業員登録 ===== -->
+    <div class="panel" id="panel-staff">
+      <div class="card" style="max-width:500px">
+        <div class="card-title">従業員を追加</div>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="text" id="staff-name-input" placeholder="氏名を入力（例：渡部 望）" style="flex:1">
+          <button class="btn btn-primary" onclick="addStaff()">追加</button>
+        </div>
+        <div class="card-title">登録済み従業員</div>
+        <div id="staff-list"></div>
       </div>
     </div>
 
@@ -502,11 +533,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const entriesRef = db.ref('keihi/entries');
+const staffRef = db.ref('keihi/staff');
 
 // =====================
 // 状態
 // =====================
 let entries = [];
+let staffList = [];
 let currentImageBase64 = null;
 let currentImageType = null;
 
@@ -525,10 +558,16 @@ function initFirebase() {
   }, (error) => {
     setSyncStatus('error');
     console.error('Firebase error:', error);
-    // フォールバック: ローカルストレージ
     const local = localStorage.getItem('keihi_entries');
     if (local) entries = JSON.parse(local);
     renderAll();
+  });
+  staffRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    staffList = data ? Object.values(data) : [];
+    staffList.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    renderStaffSelect();
+    renderStaffList();
   });
 }
 
@@ -597,6 +636,7 @@ const PANEL_TITLES = {
   entry: '経費を記録',
   list: '一覧・履歴',
   summary: '科目別集計',
+  staff: '従業員登録',
   accounts: '勘定科目一覧'
 };
 
@@ -604,13 +644,13 @@ function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
-  document.querySelectorAll('.nav-item')[
-    ['dashboard','entry','list','summary','accounts','csv'].indexOf(id)
-  ]?.classList.add('active');
+  const navOrder = ['dashboard','entry','list','summary','staff','accounts','print','csv'];
+  document.querySelectorAll('.nav-item')[navOrder.indexOf(id)]?.classList.add('active');
   document.getElementById('panel-title').textContent = PANEL_TITLES[id] || '';
   closeSidebar();
   if (id === 'list') renderList();
   if (id === 'summary') renderSummary();
+  if (id === 'staff') renderStaffList();
 }
 
 function toggleSidebar() {
@@ -791,10 +831,156 @@ function updateSubAccount(selectedAccount) {
 }
 
 function clearForm() {
-  ['f-amount','f-desc','f-vendor','f-staff','f-note'].forEach(id => document.getElementById(id).value = '');
+  ['f-amount','f-desc','f-vendor','f-note'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('f-category').value = '';
   document.getElementById('f-account').innerHTML = '<option value="">カテゴリを先に選択</option>';
+  document.getElementById('f-staff').value = '';
   document.getElementById('ai-result-box').innerHTML = '';
+}
+
+// =====================
+// 従業員管理
+// =====================
+function renderStaffSelect() {
+  const sel = document.getElementById('f-staff');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">選択してください</option>';
+  staffList.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.name; opt.textContent = s.name;
+    if (s.name === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function renderStaffList() {
+  const el = document.getElementById('staff-list');
+  if (!el) return;
+  if (!staffList.length) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:13px;padding:8px 0">まだ登録されていません</div>';
+    return;
+  }
+  el.innerHTML = staffList.map(s => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.name.charAt(0)}</div>
+      <span style="flex:1;font-size:14px">${s.name}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteStaff('${s.id}')">削除</button>
+    </div>`).join('');
+}
+
+async function addStaff() {
+  const name = document.getElementById('staff-name-input').value.trim();
+  if (!name) { alert('氏名を入力してください'); return; }
+  if (staffList.some(s => s.name === name)) { alert('同じ名前がすでに登録されています'); return; }
+  const id = Date.now();
+  try {
+    await staffRef.child(String(id)).set({ id, name });
+    document.getElementById('staff-name-input').value = '';
+  } catch(e) {
+    alert('保存に失敗しました');
+  }
+}
+
+async function deleteStaff(id) {
+  if (!confirm('この従業員を削除しますか？')) return;
+  try {
+    await staffRef.child(String(id)).remove();
+  } catch(e) {
+    alert('削除に失敗しました');
+  }
+}
+
+// =====================
+// 印刷（A4）
+// =====================
+function printReport() {
+  const month = document.getElementById('filter-month')?.value || new Date().toISOString().slice(0,7);
+  const filtered = entries.filter(e => e.date.startsWith(month)).sort((a,b) => a.date.localeCompare(b.date));
+  const grandTotal = filtered.reduce((s,e) => s + e.amount, 0);
+
+  // 科目別集計
+  const byAcct = {};
+  filtered.forEach(e => {
+    const k = e.account;
+    if (!byAcct[k]) byAcct[k] = { cat: e.category, acct: e.account, total: 0, count: 0 };
+    byAcct[k].total += e.amount; byAcct[k].count++;
+  });
+  const acctRows = Object.values(byAcct).sort((a,b) => b.total - a.total);
+
+  const [y, m] = month.split('-');
+  const title = `${y}年${parseInt(m)}月　経費明細書`;
+
+  const rows = filtered.map((e, i) => `
+    <tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${e.date}</td>
+      <td style="font-size:9pt">${e.category}</td>
+      <td>${e.account}</td>
+      <td>${e.desc}</td>
+      <td>${e.vendor || ''}</td>
+      <td style="text-align:right">¥${e.amount.toLocaleString()}</td>
+      <td>${e.payment}</td>
+      <td>${e.staff || ''}</td>
+    </tr>`).join('');
+
+  const summaryRows = acctRows.map(r => `
+    <tr>
+      <td style="font-size:9pt;color:#555">${r.cat}</td>
+      <td>${r.acct}</td>
+      <td style="text-align:center">${r.count}件</td>
+      <td style="text-align:right;font-weight:bold">¥${r.total.toLocaleString()}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="ja"><head>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    @page { size: A4 landscape; margin: 12mm 14mm; }
+    body { font-family: 'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif; font-size:10pt; color:#1a1a1a; }
+    h1 { font-size:14pt; font-weight:bold; margin:0 0 4px; }
+    .meta { font-size:9pt; color:#555; margin-bottom:14px; }
+    .section-title { font-size:10pt; font-weight:bold; color:#185FA5; border-bottom:2px solid #185FA5; padding-bottom:3px; margin:14px 0 8px; }
+    table { width:100%; border-collapse:collapse; font-size:9pt; }
+    th { background:#185FA5; color:#fff; padding:5px 6px; text-align:left; font-weight:bold; }
+    td { padding:4px 6px; border-bottom:0.5px solid #ddd; }
+    tr:nth-child(even) td { background:#f5f7fa; }
+    .total-row td { font-weight:bold; background:#E6F1FB; border-top:2px solid #185FA5; }
+    .summary-table { width:40%; }
+    .logo { font-size:11pt; font-weight:bold; color:#185FA5; }
+    .amount-total { font-size:13pt; font-weight:bold; color:#185FA5; }
+  </style>
+  </head><body>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+    <div>
+      <div class="logo">優愛ホーム</div>
+      <h1>${title}</h1>
+      <div class="meta">出力日時：${new Date().toLocaleString('ja-JP')}　／　件数：${filtered.length}件</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:9pt;color:#555">合計金額</div>
+      <div class="amount-total">¥${grandTotal.toLocaleString()}</div>
+    </div>
+  </div>
+
+  <div class="section-title">経費明細</div>
+  <table>
+    <thead><tr><th style="width:30px">No</th><th style="width:70px">日付</th><th style="width:90px">カテゴリ</th><th style="width:90px">勘定科目</th><th>摘要</th><th style="width:80px">取引先</th><th style="width:80px">金額</th><th style="width:90px">支払方法</th><th style="width:70px">担当者</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr class="total-row"><td colspan="6" style="text-align:right">合　計</td><td style="text-align:right">¥${grandTotal.toLocaleString()}</td><td colspan="2"></td></tr></tfoot>
+  </table>
+
+  <div class="section-title">勘定科目別集計</div>
+  <table class="summary-table">
+    <thead><tr><th>カテゴリ</th><th>勘定科目</th><th style="text-align:center">件数</th><th style="text-align:right">合計金額</th></tr></thead>
+    <tbody>${summaryRows}</tbody>
+    <tfoot><tr class="total-row"><td colspan="2">合　計</td><td style="text-align:center">${filtered.length}件</td><td style="text-align:right">¥${grandTotal.toLocaleString()}</td></tr></tfoot>
+  </table>
+  <script>window.onload=()=>{ window.print(); window.onafterprint=()=>window.close(); }<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank', 'width=1000,height=700');
+  w.document.write(html);
+  w.document.close();
 }
 
 async function addEntry() {
