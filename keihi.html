@@ -62,7 +62,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic Pro
   display: flex; align-items: center; gap: 10px;
   padding: 0 10px; height: var(--topbar-h); flex-shrink: 0;
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  overflow: hidden; min-width: var(--sidebar-w);
+  overflow: hidden; min-width: 0;
 }
 .sidebar-icon-img {
   width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; object-fit: cover;
@@ -91,7 +91,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Kaku Gothic Pro
 
 .nav-item {
   display: flex; align-items: center; gap: 12px;
-  padding: 0 16px; height: 44px; min-width: var(--sidebar-w);
+  padding: 0 16px; height: 44px; min-width: 0;
   font-size: 13px; color: rgba(255,255,255,0.6);
   cursor: pointer; border-left: 3px solid transparent;
   text-decoration: none; transition: all 0.15s; white-space: nowrap; overflow: hidden;
@@ -262,10 +262,13 @@ tr:hover td { background: #fafbfc; }
 
 /* ===== MOBILE ===== */
 @media (max-width: 768px) {
-  .sidebar { width: var(--sidebar-collapsed); }
-  .sidebar.open { width: var(--sidebar-w); }
-  .sidebar.collapsed { width: var(--sidebar-collapsed); }
-  .main { margin-left: var(--sidebar-collapsed) !important; }
+  .sidebar {
+    width: var(--sidebar-w);
+    transform: translateX(-100%);
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0 !important; }
   .content { padding: 14px 14px; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
   .section-row { flex-direction: column; }
@@ -273,8 +276,14 @@ tr:hover td { background: #fafbfc; }
   .form-group.full { grid-column: 1; }
   .acct-grid { grid-template-columns: 1fr 1fr; }
   .topbar { padding: 0 12px; }
+  .topbar-menu-btn { display: flex !important; }
 }
-@media print {
+.topbar-menu-btn {
+  display: none; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px;
+  background: none; border: 1px solid var(--border); cursor: pointer; flex-shrink: 0;
+}
+.topbar-menu-btn svg { width: 18px; height: 18px; }
   .sidebar, .topbar, .modal-overlay { display: none !important; }
   .main { margin-left: 0 !important; }
   .content { padding: 0 !important; }
@@ -357,6 +366,9 @@ tr:hover td { background: #fafbfc; }
 <div class="main" id="main-content">
   <div class="topbar">
     <div class="topbar-left">
+      <button class="topbar-menu-btn" onclick="toggleSidebar()">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+      </button>
       <img class="topbar-logo-img" src="icon-192.png" alt="優愛ホーム" onerror="this.style.display='none'">
       <div>
         <div class="topbar-title" id="panel-title">ダッシュボード</div>
@@ -733,13 +745,14 @@ function toggleSidebar() {
   const main = document.getElementById('main-content');
   const isMobile = window.innerWidth <= 768;
   if (isMobile) {
-    sidebar.classList.toggle('open');
-    document.getElementById('sidebar-overlay').classList.toggle('active', sidebar.classList.contains('open'));
+    const isOpen = sidebar.classList.toggle('open');
+    document.getElementById('sidebar-overlay').classList.toggle('active', isOpen);
   } else {
-    sidebar.classList.toggle('collapsed');
-    main.classList.toggle('collapsed', sidebar.classList.contains('collapsed'));
+    const isCollapsed = sidebar.classList.toggle('collapsed');
+    main.classList.toggle('collapsed', isCollapsed);
   }
 }
+
 function closeSidebar() {
   const isMobile = window.innerWidth <= 768;
   if (isMobile) {
