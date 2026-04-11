@@ -13,10 +13,6 @@
 <meta name="apple-mobile-web-app-title" content="経費管理">
 <link rel="apple-touch-icon" href="icon-192.png">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
 <style>
 :root {
   --blue: #185FA5;
@@ -603,24 +599,21 @@ const PAYMENT_COLORS = {
   "銀行振込": "#534AB7", "電子マネー": "#0F6E56", "立替（後精算）": "#BA7517"
 };
 
-// =====================
-// Firebase 設定
-// ★ここを顧客管理アプリと同じFirebase設定に書き換えてください★
-// =====================
+// Firebase設定
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyAjCyR3C3x2RLblSm056TrYWl1rZnUl0MU",
+  authDomain: "yuuai-home.firebaseapp.com",
+  databaseURL: "https://yuuai-home-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "yuuai-home",
+  storageBucket: "yuuai-home.firebasestorage.app",
+  messagingSenderId: "651453015637",
+  appId: "1:651453015637:web:2f91f94dfed5857394d6dc",
+  measurementId: "G-QTTK2K2QKJ"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const entriesRef = db.ref('keihi/entries');
-const staffRef = db.ref('keihi/staff');
+let db = null;
+let entriesRef = null;
+let staffRef = null;
 
 // =====================
 // 状態
@@ -704,8 +697,24 @@ function init() {
   document.getElementById('panel-period').textContent = today.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
   // 勘定科目一覧レンダリング
   renderAccounts();
-  // Firebase起動
-  initFirebase();
+  // Firebase スクリプトを動的に読み込んでから初期化
+  const s1 = document.createElement('script');
+  s1.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js';
+  s1.onload = function() {
+    const s2 = document.createElement('script');
+    s2.src = 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js';
+    s2.onload = function() {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      entriesRef = db.ref('keihi/entries');
+      staffRef = db.ref('keihi/staff');
+      initFirebase();
+    };
+    s2.onerror = function() { console.warn('Firebase DB読み込み失敗'); };
+    document.head.appendChild(s2);
+  };
+  s1.onerror = function() { console.warn('Firebase App読み込み失敗'); };
+  document.head.appendChild(s1);
 }
 
 function renderAll() {
@@ -1328,71 +1337,37 @@ function closeModal() {
 }
 
 // =====================
-// Service Worker（自動更新）
+// 起動
 // =====================
-let swRegistration = null;
-let newWorker = null;
+init();
 
-function registerSW() {
-  if (!('serviceWorker' in navigator)) return;
-
-  // 古いService Workerをすべて解除してキャッシュをクリア（白画面対策）
+// 古いService Workerとキャッシュをすべて削除
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(reg => reg.unregister());
   });
   caches.keys().then(keys => {
     keys.forEach(key => caches.delete(key));
   });
-
-  // 新しいSWを登録
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    swRegistration = reg;
-    reg.addEventListener('updatefound', () => {
-      newWorker = reg.installing;
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          showUpdateBanner();
-        }
-      });
-    });
-  }).catch(e => console.log('SW登録エラー:', e));
-
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
-  });
 }
 
-function showUpdateBanner() {
-  const banner = document.getElementById('update-banner');
-  if (banner) banner.style.display = 'flex';
-}
-
-function applyUpdate() {
-  if (newWorker) {
-    newWorker.postMessage({ action: 'skipWaiting' });
-  } else {
-    caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
-    window.location.reload(true);
-  }
-}
-
+// 更新ボタン（シンプルに強制リロード）
 function checkUpdate() {
-  caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
-  if (swRegistration) {
-    swRegistration.update().then(() => {
-      alert('最新版を確認しました。ページを再読み込みします。');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.unregister());
+    });
+    caches.keys().then(keys => {
+      keys.forEach(key => caches.delete(key));
       window.location.reload(true);
     });
   } else {
     window.location.reload(true);
   }
 }
-
-// =====================
-// 起動
-// =====================
-init();
-registerSW();
+function applyUpdate() { checkUpdate(); }
+function showUpdateBanner() {}
+function registerSW() {}
 </script>
 </body>
 </html>
