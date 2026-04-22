@@ -326,6 +326,8 @@ textarea { resize:vertical; min-height:78px; }
 }
 .visit-btn.ok  { border-color:#3d7a5f; color:#3d7a5f; }
 .visit-btn.ok.selected  { background:#3d7a5f; color:white; }
+.visit-btn.try { border-color:#e07b00; color:#e07b00; }
+.visit-btn.try.selected { background:#e07b00; color:white; }
 .visit-btn.ng  { border-color:#9b3a3a; color:#9b3a3a; }
 .visit-btn.ng.selected  { background:#9b3a3a; color:white; }
 .visit-btn.done { border-color:#8a8a9a; color:#8a8a9a; }
@@ -685,6 +687,9 @@ textarea { resize:vertical; min-height:78px; }
             <div class="visit-btns">
               <button class="visit-btn ok" id="visitOkBtn" onclick="setVisit('ok')">
                 ✅ 訪問可
+              </button>
+              <button class="visit-btn try" id="visitTryBtn" onclick="setVisit('try')">
+                🔔 訪問してみて欲しい
               </button>
               <button class="visit-btn ng" id="visitNgBtn" onclick="setVisit('ng')">
                 ❌ 訪問不可
@@ -1135,35 +1140,50 @@ function setVisit(status) {
   updateVisitBtns();
 }
 function updateVisitBtns() {
-  ['ok','ng','done'].forEach(function(s) {
+  ['ok','try','ng','done'].forEach(function(s) {
     const key = 'visit' + s.charAt(0).toUpperCase() + s.slice(1) + 'Btn';
     const btn = document.getElementById(key);
     if (btn) btn.classList.toggle('selected', currentVisit === s);
   });
-  const labels = {'ok':'✅ 訪問可に設定中','ng':'❌ 訪問不可に設定中','done':'🏠 訪問済みに設定中','':'未設定'};
+  const labels = {
+    'ok' :'✅ 訪問可に設定中',
+    'try':'🔔 訪問してみて欲しいに設定中',
+    'ng' :'❌ 訪問不可に設定中',
+    'done':'🏠 訪問済みに設定中',
+    ''   :'未設定'
+  };
   const lbl = document.getElementById('visitStatusLabel');
   if (lbl) lbl.textContent = labels[currentVisit] || '';
 }
 function updateVisitBadge() {
-  const count = customers.filter(c=>c.visit==='ok').length;
+  const count = customers.filter(c => c.visit === 'ok' || c.visit === 'try').length;
   const badge = document.getElementById('visitCountBadge');
   if (badge) badge.textContent = count;
 }
 function renderVisitCards() {
   const grid = document.getElementById('visitCardsGrid');
   const sub  = document.getElementById('visitSub');
-  const list = customers.filter(c=>c.visit==='ok').sort((a,b)=>(a.kana||a.name||'').localeCompare(b.kana||b.name||'','ja'));
+  const list = customers.filter(c => c.visit === 'ok' || c.visit === 'try')
+    .sort((a,b) => (a.kana||a.name||'').localeCompare(b.kana||b.name||'','ja'));
   if (sub) sub.textContent = list.length + ' 件';
   if (!list.length) {
-    grid.innerHTML='<div class="no-customers"><div style="font-size:32px;margin-bottom:10px;">🚗</div><h3>訪問可の顧客がいません</h3><p>顧客詳細の「訪問ステータス」で「✅ 訪問可」を設定してください</p></div>';
+    grid.innerHTML='<div class="no-customers"><div style="font-size:32px;margin-bottom:10px;">🚗</div><h3>訪問可の顧客がいません</h3><p>顧客詳細の「訪問ステータス」で設定してください</p></div>';
     return;
   }
-  grid.innerHTML = list.map(c=>{
-    const n=c.stars||0;
-    const addr=[c.pref,c.city,c.street].filter(Boolean).join(' ');
-    const last=c.logs&&c.logs.length?[...c.logs].sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
-    return `<div class="cust-card" style="border-color:#81c784;background:linear-gradient(135deg,#f8fff8,#f0fff4);" onclick="selectCustomer('${c.id}');switchTab('list')">
-      <div class="contracted-ribbon" style="background:#3d7a5f;">✅ 訪問可</div>
+  grid.innerHTML = list.map(c => {
+    const n    = c.stars || 0;
+    const addr = [c.pref, c.city, c.street].filter(Boolean).join(' ');
+    const last = c.logs && c.logs.length ? [...c.logs].sort((a,b) => b.date.localeCompare(a.date))[0] : null;
+    const isTry = c.visit === 'try';
+    const ribbonStyle = isTry
+      ? 'background:#e07b00;'
+      : 'background:#3d7a5f;';
+    const cardStyle = isTry
+      ? 'border-color:#f0a040;background:linear-gradient(135deg,#fffbf0,#fff3e0);'
+      : 'border-color:#81c784;background:linear-gradient(135deg,#f8fff8,#f0fff4);';
+    const ribbonText = isTry ? '🔔 訪問してみて欲しい' : '✅ 訪問可';
+    return `<div class="cust-card" style="${cardStyle}" onclick="selectCustomer('${c.id}');switchTab('list')">
+      <div class="contracted-ribbon" style="${ribbonStyle}">${ribbonText}</div>
       <div class="card-name">${c.name||'(名前なし)'}</div>
       <div class="card-addr">${addr||'住所未登録'}</div>
       <div class="card-bottom">
