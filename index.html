@@ -978,24 +978,6 @@ const KYUSHU_CHANGES = [
   {op:'鹿児島県',oc:'肝属郡肝付町',np:'鹿児島県',nc:'肝付町',r:'合併 2005年'},
 ];
 
-// ── 郵便番号内蔵DB ──
-const POSTAL_DB = {
-  '8100001':'福岡県,福岡市中央区,大名','8120011':'福岡県,福岡市博多区,博多駅前',
-  '8120012':'福岡県,福岡市博多区,博多駅東','8120031':'福岡県,福岡市博多区,上川端町',
-  '8120032':'福岡県,福岡市博多区,中洲','8120041':'福岡県,福岡市博多区,祇園町',
-  '8130000':'福岡県,福岡市東区,','8140000':'福岡県,福岡市城南区,',
-  '8150000':'福岡県,福岡市南区,','8160000':'福岡県,福岡市西区,',
-  '8170000':'福岡県,福岡市早良区,','8200001':'福岡県,北九州市門司区,清滝',
-  '8210000':'福岡県,北九州市小倉北区,','8020000':'福岡県,北九州市小倉南区,',
-  '8300000':'福岡県,久留米市,','8400000':'佐賀県,佐賀市,','8490000':'佐賀県,唐津市,',
-  '8430000':'佐賀県,鳥栖市,','8500000':'長崎県,長崎市,','8510000':'長崎県,佐世保市,',
-  '8540000':'長崎県,諫早市,','8600000':'熊本県,熊本市中央区,','8610000':'熊本県,熊本市東区,',
-  '8650000':'熊本県,八代市,','8700000':'大分県,大分市,','8710000':'大分県,別府市,',
-  '8730000':'大分県,日田市,','8800000':'宮崎県,宮崎市,','8810000':'宮崎県,都城市,',
-  '8820000':'宮崎県,延岡市,','8900000':'鹿児島県,鹿児島市,','8910000':'鹿児島県,鹿屋市,',
-  '8950100':'鹿児島県,薩摩川内市,','8970100':'鹿児島県,霧島市,',
-};
-
 // ── STATE ──
 let customers    = JSON.parse(localStorage.getItem('customers_v2') || '[]');
 let currentId    = null;
@@ -1276,14 +1258,13 @@ function newCustomer() {
   showDetail();
 }
 function loadForm(c) {
-  ['name','kana','phone','email','postal','city','street','comment'].forEach(k =>
+  ['name','phone','email','city','street','comment'].forEach(k =>
     document.getElementById('f_'+k).value = c[k]||''
   );
   document.getElementById('f_pref').value = c.pref||'';
   setStars(c.stars||0);
   currentVisit = c.visit || '';
   updateVisitBtns();
-  document.getElementById('postalResult').textContent = '';
   document.getElementById('addrChangeBlock').style.display = 'none';
   pendingChange = null;
   renderLogs(c.logs||[]);
@@ -1300,10 +1281,8 @@ function saveCustomer() {
   if (!name) { showToast('氏名を入力してください','error'); return; }
   const data = {
     id: currentId||genId(), name,
-    kana:    document.getElementById('f_kana').value.trim(),
     phone:   document.getElementById('f_phone').value.trim(),
     email:   document.getElementById('f_email').value.trim(),
-    postal:  document.getElementById('f_postal').value.trim(),
     pref:    document.getElementById('f_pref').value,
     city:    document.getElementById('f_city').value.trim(),
     street:  document.getElementById('f_street').value.trim(),
@@ -1337,45 +1316,6 @@ function deleteCustomer() {
 }
 
 // ── 郵便番号 ──
-function fmtPostal(el) {
-  let v=el.value.replace(/[^\d]/g,'');
-  if(v.length>3) v=v.slice(0,3)+'-'+v.slice(3,7);
-  el.value=v;
-}
-function searchAddr() {
-  const raw=document.getElementById('f_postal').value.replace(/-/g,'').trim();
-  if(raw.length!==7){showPostalMsg('郵便番号は7桁で入力してください',true);return;}
-  let found=POSTAL_DB[raw];
-  if(!found){for(const k in POSTAL_DB){if(k.startsWith(raw.slice(0,6))){found=POSTAL_DB[k];break;}}}
-  if(!found){for(const k in POSTAL_DB){if(k.startsWith(raw.slice(0,5))){found=POSTAL_DB[k];break;}}}
-  if(found){
-    const [pref,city,town]=found.split(',');
-    document.getElementById('f_pref').value=pref;
-    document.getElementById('f_city').value=city+(town||'');
-    showPostalMsg('✅ '+pref+' '+city+(town||''),false);
-    return;
-  }
-  showPostalMsg('検索中…',false);
-  fetch('https://postcode.teraren.com/postcodes/'+raw+'.json')
-    .then(r=>r.json())
-    .then(d=>{
-      const pref=d.prefecture||'',city=(d.city||'')+(d.suburb||'');
-      document.getElementById('f_pref').value=pref;
-      document.getElementById('f_city').value=city;
-      showPostalMsg('✅ '+pref+' '+city,false);
-    })
-    .catch(()=>{
-      const p3=parseInt(raw.slice(0,3));
-      const reg=p3>=810&&p3<=839?'福岡県':p3>=840&&p3<=849?'佐賀県':p3>=850&&p3<=859?'長崎県':
-        p3>=860&&p3<=869?'熊本県':p3>=870&&p3<=879?'大分県':p3>=880&&p3<=889?'宮崎県':p3>=890&&p3<=899?'鹿児島県':'';
-      showPostalMsg(reg?'推定: '+reg+'（手動で確認してください）':'見つかりませんでした',true);
-    });
-}
-function showPostalMsg(msg,isErr){
-  const el=document.getElementById('postalResult');
-  el.textContent=msg; el.className='postal-result'+(isErr?' postal-error':'');
-}
-
 // ── 住所変更チェック ──
 function checkAddrChange(){
   const pref=document.getElementById('f_pref').value,city=document.getElementById('f_city').value.trim();
