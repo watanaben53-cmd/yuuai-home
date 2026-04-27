@@ -421,7 +421,11 @@ async function scanReceipt() {
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
@@ -473,9 +477,9 @@ async function scanReceipt() {
     if (descEl.value) autoJudgeAccount();
 
   } catch(e) {
-    console.error(e);
+    console.error('scanReceipt error:', e);
     statusEl.className = 'ai-status error';
-    statusEl.innerHTML = '⚠️ 読み取りに失敗しました。手動で入力してください。';
+    statusEl.innerHTML = '⚠️ 読み取りに失敗しました。<br><small>' + e.message + '</small>';
   }
 
   btn.disabled = false;
