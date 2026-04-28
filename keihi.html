@@ -453,9 +453,13 @@ async function scanReceipt() {
     });
 
     const data = await res.json();
-    const text = data.content?.map(c => c.text || '').join('');
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('JSON解析失敗');
+    console.log('API response:', JSON.stringify(data).slice(0, 300));
+    if (!res.ok) throw new Error('APIエラー: ' + (data.error?.message || res.status));
+    if (!data.content || !data.content.length) throw new Error('レスポンスが空です');
+    const text = data.content.map(c => c.text || '').join('');
+    console.log('API text:', text.slice(0, 200));
+    const jsonMatch = text.match(/\{[\s\S]*?\}/);
+    if (!jsonMatch) throw new Error('JSON取得失敗: ' + text.slice(0,80));
     const info = JSON.parse(jsonMatch[0]);
 
     // フォームに自動入力
