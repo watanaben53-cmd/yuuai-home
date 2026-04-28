@@ -29,16 +29,15 @@ const staffRef = db.ref('keihi/staff');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --blue:#185FA5;--blue-dark:#0f4070;--blue-light:#e8f1fb;
-  --green:#2d7a5f;--red:#c0392b;--orange:#e67e22;
+  --green:#2d7a5f;--red:#c0392b;
   --gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;
   --gray-400:#94a3b8;--gray-600:#475569;--gray-800:#1e293b;
   --white:#ffffff;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.1);
 }
 body{font-family:'Hiragino Kana','Hiragino Sans',sans-serif;background:var(--gray-50);color:var(--gray-800);min-height:100vh}
 
-/* ヘッダー */
 .header{background:var(--blue);color:var(--white);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(24,95,165,0.3)}
-.header-title{font-size:17px;font-weight:700;letter-spacing:0.5px}
+.header-title{font-size:17px;font-weight:700}
 .header-sub{font-size:11px;opacity:0.8;margin-top:1px}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-400);transition:background 0.3s}
 .sync-dot.ok{background:#4ade80}
@@ -46,21 +45,17 @@ body{font-family:'Hiragino Kana','Hiragino Sans',sans-serif;background:var(--gra
 .sync-dot.syncing{background:#facc15;animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
 
-/* ナビ */
 .nav{display:flex;background:var(--white);border-bottom:1px solid var(--gray-200);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
 .nav-btn{flex:none;padding:12px 18px;font-size:13px;font-weight:600;border:none;background:none;color:var(--gray-400);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all 0.2s}
 .nav-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
 
-/* パネル */
 .panel{display:none;padding:16px;max-width:640px;margin:0 auto}
 .panel.active{display:block}
 
-/* カード */
 .card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:12px}
-.card-title{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title{font-size:14px;font-weight:700;color:var(--blue);margin-bottom:14px}
 
-/* フォーム */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .form-row.full{grid-template-columns:1fr}
 .form-group{display:flex;flex-direction:column;gap:4px}
@@ -69,94 +64,52 @@ label .req{color:var(--red);margin-left:2px}
 input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:14px;font-family:inherit;background:var(--white);color:var(--gray-800);transition:border 0.2s;-webkit-appearance:none}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
 textarea{min-height:70px;resize:vertical}
-.input-readonly{background:var(--blue-light);border-color:var(--blue);color:var(--blue-dark);font-weight:600}
 
-/* 領収書エリア */
-.receipt-area{border:2px dashed var(--gray-200);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;background:var(--gray-50)}
-.receipt-area:hover,.receipt-area.dragover{border-color:var(--blue);background:var(--blue-light)}
-.receipt-area img{max-width:100%;max-height:200px;border-radius:8px;object-fit:contain}
-.receipt-placeholder{color:var(--gray-400);font-size:13px}
-.receipt-placeholder .icon{font-size:36px;margin-bottom:8px}
-#receiptInput{display:none}
+/* 勘定科目AI判定バッジ */
+.account-badge-wrap{display:none;align-items:center;gap:8px;padding:10px 12px;background:var(--blue-light);border-radius:8px;margin-bottom:10px}
+.account-badge-label{font-size:12px;color:var(--gray-600)}
+.account-badge{font-size:14px;font-weight:800;color:var(--blue)}
+.account-badge-hint{font-size:11px;color:var(--gray-400);margin-left:auto}
 
-/* AI読み取りボタン */
-.ai-btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
-.ai-btn-scan{background:linear-gradient(135deg,#7c3aed,#4f46e5);color:var(--white)}
-.ai-btn-scan:hover{opacity:0.9;transform:translateY(-1px)}
-.ai-btn-scan:disabled{background:var(--gray-200);color:var(--gray-400);transform:none;cursor:not-allowed}
-
-/* AI読み取り結果ステータス */
-.ai-status{padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px;display:none}
-.ai-status.loading{background:#fef3c7;color:#92400e;display:flex;align-items:center;gap:8px}
-.ai-status.success{background:#d1fae5;color:#065f46;display:block}
-.ai-status.error{background:#fee2e2;color:#991b1b;display:block}
-.spinner{width:16px;height:16px;border:2px solid #92400e;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* 勘定科目バッジ */
-.account-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:var(--blue-light);color:var(--blue)}
-
-/* 送信ボタン */
-.submit-btn{width:100%;padding:14px;background:var(--blue);color:var(--white);border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px}
+.submit-btn{width:100%;padding:14px;background:var(--blue);color:var(--white);border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.2s}
 .submit-btn:hover{background:var(--blue-dark)}
 .submit-btn:disabled{background:var(--gray-200);color:var(--gray-400);cursor:not-allowed}
 
 /* 一覧 */
-.entry-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:10px;border-left:4px solid var(--blue)}
-.entry-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px}
-.entry-amount{font-size:18px;font-weight:800;color:var(--gray-800)}
-.entry-date{font-size:11px;color:var(--gray-400)}
-.entry-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.tag{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
-.tag-account{background:var(--blue-light);color:var(--blue)}
-.tag-staff{background:#f0fdf4;color:var(--green)}
-.tag-company{background:#fef9c3;color:#713f12}
-.entry-desc{font-size:13px;color:var(--gray-600);margin-top:6px}
-.entry-receipt{margin-top:8px}
-.entry-receipt img{max-width:100px;max-height:70px;object-fit:cover;border-radius:6px;cursor:pointer;border:1px solid var(--gray-200)}
-.delete-btn{padding:4px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:11px;color:var(--gray-400);background:none;cursor:pointer}
-.delete-btn:hover{border-color:var(--red);color:var(--red)}
-
-/* フィルター */
+.month-select{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.month-select select{flex:1;font-weight:700;color:var(--blue)}
 .filter-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .filter-row::-webkit-scrollbar{display:none}
 .filter-chip{flex:none;padding:6px 14px;border-radius:20px;border:1.5px solid var(--gray-200);font-size:12px;font-weight:600;background:var(--white);color:var(--gray-600);cursor:pointer;transition:all 0.2s}
 .filter-chip.active{background:var(--blue);color:var(--white);border-color:var(--blue)}
 
+.entry-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:10px;border-left:4px solid var(--blue)}
+.entry-header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.entry-amount{font-size:20px;font-weight:800}
+.entry-date{font-size:11px;color:var(--gray-400);margin-top:2px}
+.entry-desc{font-size:13px;color:var(--gray-600);margin:6px 0}
+.entry-meta{display:flex;flex-wrap:wrap;gap:6px}
+.tag{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.tag-account{background:var(--blue-light);color:var(--blue)}
+.tag-company{background:#fef9c3;color:#713f12}
+.tag-staff{background:#f0fdf4;color:var(--green)}
+.delete-btn{padding:4px 10px;border:1px solid var(--gray-200);border-radius:6px;font-size:11px;color:var(--gray-400);background:none;cursor:pointer;white-space:nowrap}
+.delete-btn:hover{border-color:var(--red);color:var(--red)}
+
 /* 集計 */
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .stat-card{background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center}
 .stat-label{font-size:11px;color:var(--gray-400);margin-bottom:4px}
-.stat-value{font-size:20px;font-weight:800;color:var(--blue)}
+.stat-value{font-size:22px;font-weight:800;color:var(--blue)}
 .account-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)}
 .account-row:last-child{border-bottom:none}
-.account-name{font-size:13px;color:var(--gray-800)}
-.account-total{font-size:14px;font-weight:700;color:var(--gray-800)}
 .account-bar{height:4px;background:var(--blue-light);border-radius:2px;margin-top:4px;overflow:hidden}
 .account-bar-fill{height:100%;background:var(--blue);border-radius:2px}
 
-/* 月選択 */
-.month-select{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.month-select select{flex:1;font-weight:700;color:var(--blue)}
-
-/* 画像モーダル */
-.img-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
-.img-modal.open{display:flex}
-.img-modal img{max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px}
-.img-modal-close{position:absolute;top:16px;right:16px;background:var(--white);border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-
-/* トースト */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--gray-800);color:var(--white);padding:12px 20px;border-radius:8px;font-size:13px;z-index:999;transition:transform 0.3s;white-space:nowrap}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.success{background:var(--green)}
 .toast.error{background:var(--red)}
-
-/* 月次印刷 */
-@media print{
-  .header,.nav,.filter-row,.submit-btn,.delete-btn,.ai-btn,.receipt-area{display:none!important}
-  .panel{display:block!important;padding:0}
-  .entry-card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
-}
 </style>
 </head>
 <body>
@@ -181,34 +134,21 @@ textarea{min-height:70px;resize:vertical}
 
 <!-- ===== 記録パネル ===== -->
 <div id="panel-entry" class="panel active">
-
   <div class="card">
-    <div class="card-title">📷 領収書を読み取る</div>
-
-    <div class="receipt-area" id="receiptArea" onclick="document.getElementById('receiptInput').click()">
-      <div class="receipt-placeholder" id="receiptPlaceholder">
-        <div class="icon">🧾</div>
-        <div style="font-weight:700;margin-bottom:4px">タップして写真を選択</div>
-        <div style="font-size:12px">カメラ撮影またはライブラリから選択</div>
-      </div>
-      <img id="receiptPreview" style="display:none" alt="領収書プレビュー">
-    </div>
-    <input type="file" id="receiptInput" accept="image/*" capture="environment" onchange="onReceiptSelected(this)">
-
-    <button class="ai-btn ai-btn-scan" id="aiScanBtn" onclick="scanReceipt()" disabled>
-      ✨ AIで領収書を読み取る
-    </button>
-    <div class="ai-status" id="aiStatus"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">✏️ 経費の内容を入力</div>
+    <div class="card-title">📝 経費を記録する</div>
 
     <div class="form-row full">
       <div class="form-group">
-        <label>摘要（内容）<span class="req">*</span></label>
-        <textarea id="desc" placeholder="例：現場移動用のガソリン代、打合せの昼食代など&#10;※この内容でAIが勘定科目を判定します" oninput="autoJudgeAccount()"></textarea>
+        <label>摘要（内容）<span class="req">*</span><span style="font-weight:400;color:var(--gray-400);margin-left:6px;font-size:11px">入力すると勘定科目を自動判定</span></label>
+        <textarea id="desc" placeholder="例：現場移動のガソリン代、打合せの昼食代など" oninput="autoJudgeAccount()"></textarea>
       </div>
+    </div>
+
+    <!-- AI判定バッジ -->
+    <div class="account-badge-wrap" id="accountBadgeWrap">
+      <span class="account-badge-label">🤖 AI判定：</span>
+      <span class="account-badge" id="accountBadge"></span>
+      <span class="account-badge-hint">変更可↓</span>
     </div>
 
     <div class="form-row">
@@ -217,32 +157,32 @@ textarea{min-height:70px;resize:vertical}
         <input type="date" id="date" required>
       </div>
       <div class="form-group">
-        <label>担当者</label>
-        <select id="staff">
-          <option value="">選択してください</option>
-        </select>
+        <label>金額（円）<span class="req">*</span></label>
+        <input type="number" id="amount" placeholder="例：3800">
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group">
         <label>取引先・店名</label>
-        <input type="text" id="company" class="input-readonly" placeholder="AIが自動入力" readonly>
+        <input type="text" id="company" placeholder="例：ENEOSスタンド">
       </div>
       <div class="form-group">
-        <label>金額（円）<span class="req">*</span></label>
-        <input type="number" id="amount" class="input-readonly" placeholder="AIが自動入力" readonly>
+        <label>消費税（円）</label>
+        <input type="number" id="tax" placeholder="例：345">
       </div>
     </div>
 
     <div class="form-row">
       <div class="form-group">
-        <label>消費税（円）</label>
-        <input type="number" id="tax" class="input-readonly" placeholder="AIが自動入力" readonly>
+        <label>担当者</label>
+        <select id="staff">
+          <option value="">選択してください</option>
+        </select>
       </div>
       <div class="form-group">
         <label>勘定科目</label>
-        <select id="account">
+        <select id="account" onchange="onAccountManualChange()">
           <option value="">─ 自動判定 ─</option>
           <option>旅費交通費</option><option>交際費</option><option>会議費</option>
           <option>消耗品費</option><option>通信費</option><option>広告宣伝費</option>
@@ -251,11 +191,6 @@ textarea{min-height:70px;resize:vertical}
           <option>給料賃金</option><option>減価償却費</option><option>雑費</option>
         </select>
       </div>
-    </div>
-
-    <div id="accountBadgeArea" style="margin-bottom:10px;display:none">
-      <span style="font-size:12px;color:var(--gray-400)">AI判定：</span>
-      <span class="account-badge" id="accountBadge"></span>
     </div>
 
     <button class="submit-btn" id="submitBtn" onclick="submitEntry()">💾 記録する</button>
@@ -268,9 +203,7 @@ textarea{min-height:70px;resize:vertical}
     <label style="font-size:13px;color:var(--gray-600);white-space:nowrap">表示月：</label>
     <select id="listMonth" onchange="renderList()"></select>
   </div>
-  <div class="filter-row" id="filterRow">
-    <div class="filter-chip active" onclick="setFilter('all',this)">すべて</div>
-  </div>
+  <div class="filter-row" id="filterRow"></div>
   <div id="listContainer"></div>
 </div>
 
@@ -305,13 +238,6 @@ textarea{min-height:70px;resize:vertical}
   </div>
 </div>
 
-<!-- 画像モーダル -->
-<div class="img-modal" id="imgModal" onclick="closeModal()">
-  <button class="img-modal-close">✕</button>
-  <img id="modalImg" src="" alt="">
-</div>
-
-<!-- トースト -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -319,10 +245,9 @@ textarea{min-height:70px;resize:vertical}
 // 状態
 // =====================
 let entries = [];
-let staffList = [];
-let currentImageBase64 = null;
-let currentImageType = null;
+let staffMembers = [];
 let currentFilter = 'all';
+let manualAccountSelected = false;
 
 // =====================
 // Firebase同期
@@ -331,9 +256,9 @@ function setSyncStatus(state) {
   const dot = document.getElementById('syncDot');
   const label = document.getElementById('syncLabel');
   dot.className = 'sync-dot';
-  if (state === 'ok') { dot.classList.add('ok'); label.textContent = '同期済み'; }
-  else if (state === 'ng') { dot.classList.add('ng'); label.textContent = '同期エラー'; }
-  else { dot.classList.add('syncing'); label.textContent = '同期中…'; }
+  if (state==='ok'){ dot.classList.add('ok'); label.textContent='同期済み'; }
+  else if (state==='ng'){ dot.classList.add('ng'); label.textContent='同期エラー'; }
+  else { dot.classList.add('syncing'); label.textContent='同期中…'; }
 }
 
 function initFirebase() {
@@ -348,8 +273,8 @@ function initFirebase() {
 
   staffRef.on('value', snap => {
     const d = snap.val();
-    staffList = d ? Object.values(d) : [];
-    staffList.sort((a,b) => a.name.localeCompare(b.name,'ja'));
+    staffMembers = d ? Object.values(d) : [];
+    staffMembers.sort((a,b) => a.name.localeCompare(b.name,'ja'));
     renderStaffSelect(); renderStaffList();
   });
 }
@@ -360,11 +285,11 @@ function initFirebase() {
 function showPanel(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
   const idx = ['entry','list','summary','staff'].indexOf(id);
   document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
-  if (id === 'list') renderList();
-  if (id === 'summary') renderSummary();
+  if (id==='list') renderList();
+  if (id==='summary') renderSummary();
 }
 
 // =====================
@@ -372,171 +297,77 @@ function showPanel(id) {
 // =====================
 function buildMonthOptions() {
   const now = new Date();
-  const opts = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const val = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    const label = d.getFullYear() + '年' + (d.getMonth()+1) + '月';
-    opts.push('<option value="' + val + '">' + label + '</option>');
+  let opts = '';
+  for (let i=0; i<12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const val = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    const lbl = d.getFullYear()+'年'+(d.getMonth()+1)+'月';
+    opts += '<option value="'+val+'">'+lbl+'</option>';
   }
-  document.getElementById('listMonth').innerHTML = opts.join('');
-  document.getElementById('summaryMonth').innerHTML = opts.join('');
+  document.getElementById('listMonth').innerHTML = opts;
+  document.getElementById('summaryMonth').innerHTML = opts;
 }
 
 // =====================
-// 領収書選択
-// =====================
-function onReceiptSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const dataUrl = e.target.result;
-    const [header, b64] = dataUrl.split(',');
-    const mime = header.match(/data:(.*);/)[1];
-    currentImageBase64 = b64;
-    currentImageType = mime;
-    document.getElementById('receiptPlaceholder').style.display = 'none';
-    const img = document.getElementById('receiptPreview');
-    img.src = dataUrl; img.style.display = 'block';
-    document.getElementById('aiScanBtn').disabled = false;
-    document.getElementById('aiStatus').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
-}
-
-// =====================
-// AI領収書スキャン
-// =====================
-async function scanReceipt() {
-  if (!currentImageBase64) return;
-  const btn = document.getElementById('aiScanBtn');
-  const statusEl = document.getElementById('aiStatus');
-  btn.disabled = true;
-  btn.textContent = '読み取り中…';
-  statusEl.className = 'ai-status loading';
-  statusEl.innerHTML = '<div class="spinner"></div>AIが領収書を解析しています…';
-  statusEl.style.display = 'flex';
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: currentImageType, data: currentImageBase64 }
-            },
-            {
-              type: 'text',
-              text: `この領収書・レシートから以下の情報を読み取り、必ずJSON形式のみで返答してください（余計な文章は不要）。
-{
-  "company": "店舗・会社名（不明な場合は空文字）",
-  "amount": 合計金額の数値（税込、円、数値のみ、不明な場合は0）,
-  "tax": 消費税額の数値（数値のみ、不明な場合は0）,
-  "date": "日付（YYYY-MM-DD形式、不明な場合は空文字）",
-  "items": "商品・サービスの内容（簡潔に、不明な場合は空文字）"
-}`
-            }
-          ]
-        }]
-      })
-    });
-
-    const data = await res.json();
-    console.log('API response:', JSON.stringify(data).slice(0, 300));
-    if (!res.ok) throw new Error('APIエラー: ' + (data.error?.message || res.status));
-    if (!data.content || !data.content.length) throw new Error('レスポンスが空です');
-    const text = data.content.map(c => c.text || '').join('');
-    console.log('API text:', text.slice(0, 200));
-    const jsonMatch = text.match(/\{[\s\S]*?\}/);
-    if (!jsonMatch) throw new Error('JSON取得失敗: ' + text.slice(0,80));
-    const info = JSON.parse(jsonMatch[0]);
-
-    // フォームに自動入力
-    if (info.company) document.getElementById('company').value = info.company;
-    if (info.amount) document.getElementById('amount').value = info.amount;
-    if (info.tax) document.getElementById('tax').value = info.tax;
-    if (info.date) document.getElementById('date').value = info.date;
-
-    // 摘要のヒント表示
-    const descEl = document.getElementById('desc');
-    if (!descEl.value && info.items) {
-      descEl.placeholder = '例：' + info.items + '\n※この内容でAIが勘定科目を判定します';
-    }
-
-    statusEl.className = 'ai-status success';
-    statusEl.innerHTML = '✅ 読み取り完了！内容（摘要）を入力すると勘定科目が自動判定されます。';
-
-    // 内容があれば勘定科目も判定
-    if (descEl.value) autoJudgeAccount();
-
-  } catch(e) {
-    console.error('scanReceipt error:', e);
-    statusEl.className = 'ai-status error';
-    statusEl.innerHTML = '⚠️ 読み取りに失敗しました。<br><small>' + e.message + '</small>';
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '✨ AIで領収書を再読み取り';
-}
-
-// =====================
-// 勘定科目自動判定
+// 勘定科目 自動判定
 // =====================
 const ACCOUNT_RULES = [
-  { keys:['ガソリン','燃料','高速','駐車','電車','バス','タクシー','交通','移動','出張'], account:'旅費交通費' },
-  { keys:['食事','飲食','昼食','夕食','接待','ランチ','ディナー','居酒屋','レストラン','カフェ','喫茶'], account:'交際費' },
-  { keys:['会議','打合せ','打ち合わせ','ミーティング','会合'], account:'会議費' },
-  { keys:['文具','事務用品','コピー','印刷','トナー','ペン','ノート','封筒'], account:'消耗品費' },
-  { keys:['電話','携帯','インターネット','通信','郵便','宅配','運送'], account:'通信費' },
-  { keys:['広告','チラシ','看板','ホームページ','宣伝','PR'], account:'広告宣伝費' },
-  { keys:['外注','下請','業務委託','アルバイト','パート'], account:'外注費' },
-  { keys:['修理','修繕','補修','メンテナンス'], account:'修繕費' },
-  { keys:['電気','水道','ガス','光熱'], account:'水道光熱費' },
-  { keys:['家賃','賃料','駐車場代','リース'], account:'地代家賃' },
-  { keys:['保険'], account:'損害保険料' },
-  { keys:['慶弔','弔慰','お祝い','冠婚葬祭','健康診断','レクリエーション'], account:'福利厚生費' },
+  { keys:['ガソリン','給油','燃料','高速','駐車','電車','バス','タクシー','交通','移動','出張','運賃','切符'], account:'旅費交通費' },
+  { keys:['接待','会食','飲み会','居酒屋','レストラン','食事','昼食','夕食','ランチ','ディナー','カフェ','喫茶','飲食'], account:'交際費' },
+  { keys:['会議','打合せ','打ち合わせ','ミーティング','会合','コーヒー代'], account:'会議費' },
+  { keys:['文具','事務用品','コピー用紙','印刷','トナー','ボールペン','ノート','封筒','クリップ'], account:'消耗品費' },
+  { keys:['電話','携帯','スマホ','インターネット','通信','郵便','宅配','運送','切手'], account:'通信費' },
+  { keys:['広告','チラシ','看板','ホームページ','宣伝','PR','SNS','折込'], account:'広告宣伝費' },
+  { keys:['外注','下請','業務委託','アルバイト','パート','協力'], account:'外注費' },
+  { keys:['修理','修繕','補修','メンテナンス','点検'], account:'修繕費' },
+  { keys:['電気','水道','ガス','光熱','電力'], account:'水道光熱費' },
+  { keys:['家賃','賃料','駐車場代','リース','レンタル','借'], account:'地代家賃' },
+  { keys:['保険料','保険'], account:'損害保険料' },
+  { keys:['慶弔','弔慰','お祝い','冠婚葬祭','健康診断','レクリエーション','制服','作業着'], account:'福利厚生費' },
+  { keys:['材料','資材','部材','建材','工具','道具'], account:'消耗品費' },
 ];
 
-let accountJudgeTimer = null;
+let judgeTimer = null;
 function autoJudgeAccount() {
-  clearTimeout(accountJudgeTimer);
-  accountJudgeTimer = setTimeout(() => {
-    const desc = document.getElementById('desc').value;
-    const company = document.getElementById('company').value;
-    const text = desc + ' ' + company;
+  if (manualAccountSelected) return;
+  clearTimeout(judgeTimer);
+  judgeTimer = setTimeout(() => {
+    const text = document.getElementById('desc').value;
     if (!text.trim()) { hideAccountBadge(); return; }
-
     for (const rule of ACCOUNT_RULES) {
       if (rule.keys.some(k => text.includes(k))) {
-        setAccountBadge(rule.account);
+        applyAccountJudge(rule.account);
         return;
       }
     }
-    setAccountBadge('雑費');
+    applyAccountJudge('雑費');
   }, 400);
 }
 
-function setAccountBadge(account) {
+function applyAccountJudge(account) {
   document.getElementById('accountBadge').textContent = account;
-  document.getElementById('accountBadgeArea').style.display = 'block';
+  document.getElementById('accountBadgeWrap').style.display = 'flex';
   const sel = document.getElementById('account');
-  for (let i = 0; i < sel.options.length; i++) {
+  for (let i=0; i<sel.options.length; i++) {
     if (sel.options[i].text === account) { sel.selectedIndex = i; break; }
   }
 }
+
 function hideAccountBadge() {
-  document.getElementById('accountBadgeArea').style.display = 'none';
+  document.getElementById('accountBadgeWrap').style.display = 'none';
+}
+
+function onAccountManualChange() {
+  const val = document.getElementById('account').value;
+  if (val) {
+    manualAccountSelected = true;
+    document.getElementById('accountBadge').textContent = val;
+    document.getElementById('accountBadgeWrap').style.display = 'flex';
+    document.getElementById('accountBadgeWrap').querySelector('.account-badge-hint').textContent = '手動選択';
+  } else {
+    manualAccountSelected = false;
+    autoJudgeAccount();
+  }
 }
 
 // =====================
@@ -548,15 +379,17 @@ function submitEntry() {
   const desc = document.getElementById('desc').value.trim();
   if (!date || !amount || !desc) { showToast('日付・金額・摘要は必須です', 'error'); return; }
 
+  const account = document.getElementById('account').value || document.getElementById('accountBadge').textContent || '雑費';
+
   const entry = {
-    id: 'e_' + Date.now(),
-    date, amount: Number(amount),
+    id: 'e_'+Date.now(),
+    date,
+    amount: Number(amount),
     tax: Number(document.getElementById('tax').value) || 0,
-    company: document.getElementById('company').value,
-    account: document.getElementById('account').value || document.getElementById('accountBadge').textContent || '雑費',
+    company: document.getElementById('company').value.trim(),
+    account,
     desc,
     staff: document.getElementById('staff').value,
-    imageBase64: currentImageBase64 ? (currentImageType + ':' + currentImageBase64) : '',
     createdAt: new Date().toISOString()
   };
 
@@ -573,19 +406,15 @@ function submitEntry() {
 }
 
 function resetForm() {
-  ['date','amount','tax','company','desc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('desc').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('tax').value = '';
+  document.getElementById('company').value = '';
   document.getElementById('account').selectedIndex = 0;
   document.getElementById('staff').selectedIndex = 0;
-  document.getElementById('receiptPreview').style.display = 'none';
-  document.getElementById('receiptPreview').src = '';
-  document.getElementById('receiptPlaceholder').style.display = 'block';
-  document.getElementById('receiptInput').value = '';
-  document.getElementById('aiStatus').style.display = 'none';
-  document.getElementById('aiScanBtn').disabled = true;
-  document.getElementById('aiScanBtn').innerHTML = '✨ AIで領収書を読み取る';
+  manualAccountSelected = false;
   hideAccountBadge();
-  currentImageBase64 = null;
-  currentImageType = null;
+  // 日付は今日のまま残す
 }
 
 // =====================
@@ -600,53 +429,49 @@ function setFilter(val, el) {
 
 function renderList() {
   const month = document.getElementById('listMonth').value;
-  let filtered = entries.filter(e => e.date.startsWith(month));
-  if (currentFilter !== 'all') filtered = filtered.filter(e => e.account === currentFilter);
+  const monthEntries = entries.filter(e => e.date.startsWith(month));
+  const filtered = currentFilter==='all' ? monthEntries : monthEntries.filter(e => e.account===currentFilter);
 
-  // フィルターチップ更新
-  const allAccounts = [...new Set(entries.filter(e => e.date.startsWith(month)).map(e => e.account).filter(Boolean))];
-  const row = document.getElementById('filterRow');
-  const existing = Array.from(row.querySelectorAll('.filter-chip'));
-  const chips = ['<div class="filter-chip' + (currentFilter==='all'?' active':'') + '" onclick="setFilter(\'all\',this)">すべて</div>'];
-  allAccounts.forEach(a => {
-    chips.push('<div class="filter-chip' + (currentFilter===a?' active':'') + '" onclick="setFilter(\'' + a + '\',this)">' + a + '</div>');
+  // フィルターチップ
+  const accounts = [...new Set(monthEntries.map(e => e.account).filter(Boolean))];
+  let chips = '<div class="filter-chip'+(currentFilter==='all'?' active':'')+'" onclick="setFilter(\'all\',this)">すべて</div>';
+  accounts.forEach(a => {
+    chips += '<div class="filter-chip'+(currentFilter===a?' active':'')+'" onclick="setFilter(\''+escHtml(a)+'\',this)">'+escHtml(a)+'</div>';
   });
-  row.innerHTML = chips.join('');
+  document.getElementById('filterRow').innerHTML = chips;
 
   const container = document.getElementById('listContainer');
-  if (!filtered.length) { container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400)">記録がありません</div>'; return; }
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray-400)">記録がありません</div>';
+    return;
+  }
 
-  container.innerHTML = filtered.map(e => {
-    const imgTag = e.imageBase64 ? (() => {
-      const [mime, b64] = e.imageBase64.split(':');
-      return '<div class="entry-receipt"><img src="data:' + mime + ';base64,' + b64 + '" onclick="openModal(\'data:' + mime + ';base64,' + b64 + '\')" alt="領収書"></div>';
-    })() : '';
-    return '<div class="entry-card">' +
-      '<div class="entry-header">' +
-        '<div>' +
-          '<div class="entry-amount">¥' + e.amount.toLocaleString() + (e.tax ? '<span style="font-size:12px;color:var(--gray-400);margin-left:4px">(税' + e.tax.toLocaleString() + '円)</span>' : '') + '</div>' +
-          '<div class="entry-date">' + e.date + '</div>' +
-        '</div>' +
-        '<button class="delete-btn" onclick="deleteEntry(\'' + e.id + '\')">削除</button>' +
-      '</div>' +
-      '<div class="entry-desc">' + escHtml(e.desc) + '</div>' +
-      '<div class="entry-meta">' +
-        (e.account ? '<span class="tag tag-account">' + e.account + '</span>' : '') +
-        (e.company ? '<span class="tag tag-company">🏢 ' + escHtml(e.company) + '</span>' : '') +
-        (e.staff ? '<span class="tag tag-staff">👤 ' + escHtml(e.staff) + '</span>' : '') +
-      '</div>' +
-      imgTag +
-    '</div>';
-  }).join('');
-}
-
-function escHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  container.innerHTML = filtered.map(e =>
+    '<div class="entry-card">'+
+      '<div class="entry-header">'+
+        '<div>'+
+          '<div class="entry-amount">¥'+Number(e.amount).toLocaleString()+'</div>'+
+          '<div class="entry-date">'+e.date+(e.tax?'　税'+Number(e.tax).toLocaleString()+'円':'')+'</div>'+
+        '</div>'+
+        '<button class="delete-btn" onclick="deleteEntry(\''+e.id+'\')">削除</button>'+
+      '</div>'+
+      '<div class="entry-desc">'+escHtml(e.desc)+'</div>'+
+      '<div class="entry-meta">'+
+        (e.account?'<span class="tag tag-account">'+escHtml(e.account)+'</span>':'')+
+        (e.company?'<span class="tag tag-company">🏢 '+escHtml(e.company)+'</span>':'')+
+        (e.staff?'<span class="tag tag-staff">👤 '+escHtml(e.staff)+'</span>':'')+
+      '</div>'+
+    '</div>'
+  ).join('');
 }
 
 function deleteEntry(id) {
   if (!confirm('この記録を削除しますか？')) return;
   entriesRef.child(id).remove().then(() => showToast('削除しました', 'success'));
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // =====================
@@ -655,28 +480,28 @@ function deleteEntry(id) {
 function renderSummary() {
   const month = document.getElementById('summaryMonth').value;
   const filtered = entries.filter(e => e.date.startsWith(month));
-  const total = filtered.reduce((s, e) => s + e.amount, 0);
-  const count = filtered.length;
+  const total = filtered.reduce((s,e) => s+e.amount, 0);
 
   document.getElementById('summaryStats').innerHTML =
-    '<div class="stat-card"><div class="stat-label">合計金額</div><div class="stat-value">¥' + total.toLocaleString() + '</div></div>' +
-    '<div class="stat-card"><div class="stat-label">件数</div><div class="stat-value">' + count + '件</div></div>';
+    '<div class="stat-card"><div class="stat-label">合計金額</div><div class="stat-value">¥'+total.toLocaleString()+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">件数</div><div class="stat-value">'+filtered.length+'件</div></div>';
 
   const byAccount = {};
-  filtered.forEach(e => {
-    const a = e.account || '未分類';
-    byAccount[a] = (byAccount[a] || 0) + e.amount;
-  });
-  const sorted = Object.entries(byAccount).sort((a,b) => b[1]-a[1]);
-  const max = sorted[0]?.[1] || 1;
-  document.getElementById('accountBreakdown').innerHTML = sorted.map(([a, amt]) =>
-    '<div class="account-row">' +
-      '<div><div class="account-name">' + a + '</div>' +
-        '<div class="account-bar"><div class="account-bar-fill" style="width:' + (amt/max*100) + '%"></div></div>' +
-      '</div>' +
-      '<div class="account-total">¥' + amt.toLocaleString() + '</div>' +
-    '</div>'
-  ).join('') || '<div style="color:var(--gray-400);text-align:center;padding:20px">データがありません</div>';
+  filtered.forEach(e => { const a=e.account||'未分類'; byAccount[a]=(byAccount[a]||0)+e.amount; });
+  const sorted = Object.entries(byAccount).sort((a,b)=>b[1]-a[1]);
+  const max = sorted[0]?.[1]||1;
+
+  document.getElementById('accountBreakdown').innerHTML = sorted.length ?
+    sorted.map(([a,amt]) =>
+      '<div class="account-row">'+
+        '<div style="flex:1">'+
+          '<div style="font-size:13px">'+escHtml(a)+'</div>'+
+          '<div class="account-bar"><div class="account-bar-fill" style="width:'+(amt/max*100)+'%"></div></div>'+
+        '</div>'+
+        '<div style="font-size:14px;font-weight:700;margin-left:12px">¥'+amt.toLocaleString()+'</div>'+
+      '</div>'
+    ).join('') :
+    '<div style="color:var(--gray-400);text-align:center;padding:20px">データがありません</div>';
 }
 
 // =====================
@@ -685,18 +510,21 @@ function renderSummary() {
 function renderStaffSelect() {
   const sel = document.getElementById('staff');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">選択してください</option>' +
-    staffList.map(s => '<option value="' + escHtml(s.name) + '">' + escHtml(s.name) + '</option>').join('');
+  sel.innerHTML = '<option value="">選択してください</option>'+
+    staffMembers.map(s=>'<option value="'+escHtml(s.name)+'">'+escHtml(s.name)+'</option>').join('');
   sel.value = cur;
 }
 
 function renderStaffList() {
   const el = document.getElementById('staffList');
-  if (!staffList.length) { el.innerHTML = '<div style="color:var(--gray-400);text-align:center;padding:20px">担当者が登録されていません</div>'; return; }
-  el.innerHTML = staffList.map(s =>
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)">' +
-      '<span style="font-size:14px">' + escHtml(s.name) + '</span>' +
-      '<button class="delete-btn" onclick="deleteStaff(\'' + s.id + '\')">削除</button>' +
+  if (!staffMembers.length) {
+    el.innerHTML = '<div style="color:var(--gray-400);text-align:center;padding:20px">担当者が登録されていません</div>';
+    return;
+  }
+  el.innerHTML = staffMembers.map(s=>
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)">'+
+      '<span style="font-size:14px">'+escHtml(s.name)+'</span>'+
+      '<button class="delete-btn" onclick="deleteStaff(\''+s.id+'\')">削除</button>'+
     '</div>'
   ).join('');
 }
@@ -704,7 +532,7 @@ function renderStaffList() {
 function addStaff() {
   const name = document.getElementById('staffName').value.trim();
   if (!name) { showToast('氏名を入力してください', 'error'); return; }
-  const s = { id: 's_' + Date.now(), name };
+  const s = { id:'s_'+Date.now(), name };
   staffRef.child(s.id).set(s).then(() => {
     document.getElementById('staffName').value = '';
     showToast('担当者を追加しました', 'success');
@@ -717,23 +545,12 @@ function deleteStaff(id) {
 }
 
 // =====================
-// 画像モーダル
-// =====================
-function openModal(src) {
-  document.getElementById('modalImg').src = src;
-  document.getElementById('imgModal').classList.add('open');
-}
-function closeModal() {
-  document.getElementById('imgModal').classList.remove('open');
-}
-
-// =====================
 // トースト
 // =====================
 function showToast(msg, type) {
   const t = document.getElementById('toast');
   t.textContent = msg;
-  t.className = 'toast ' + (type||'');
+  t.className = 'toast '+(type||'');
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
@@ -742,8 +559,7 @@ function showToast(msg, type) {
 // 初期化
 // =====================
 function init() {
-  const today = new Date();
-  document.getElementById('date').value = today.toISOString().split('T')[0];
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
   buildMonthOptions();
   initFirebase();
 }
