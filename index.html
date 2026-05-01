@@ -314,7 +314,30 @@ textarea { resize:vertical; min-height:78px; }
 .contracted-fields { display:none; margin-top:8px; }
 .contracted-fields.show { display:block; }
 
-/* 訪問ステータス */
+/* 並び替え */
+.sort-bar { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.sort-label { font-size:11px; color:var(--muted); font-weight:600; }
+.sort-btn {
+  background:white; border:1.5px solid var(--border); border-radius:16px;
+  padding:5px 12px; font-size:11px; cursor:pointer; transition:all 0.2s;
+  font-family:'Noto Sans JP',sans-serif; color:var(--ink); font-weight:500;
+  display:flex; align-items:center; gap:4px;
+}
+.sort-btn:hover { border-color:var(--accent); color:var(--accent); }
+.sort-btn.active { background:var(--ink); border-color:var(--ink); color:white; font-weight:600; }
+
+/* 住所グループヘッダー */
+.addr-group-header {
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 8px; margin-bottom: 4px;
+}
+.addr-group-label {
+  background: var(--ink); color: var(--accent-light);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 4px 12px; border-radius: 12px;
+}
+.addr-group-line { flex:1; height:1px; background:var(--border); }
 .visit-status-wrap { margin-top:14px; }
 .visit-status-label { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:0.05em; margin-bottom:8px; }
 .visit-btns { display:flex; gap:8px; flex-wrap:wrap; }
@@ -589,6 +612,13 @@ textarea { resize:vertical; min-height:78px; }
         <button class="star-filter-btn" onclick="setStarFilter(3, this)"><span class="s">★★★</span> 良好</button>
         <button class="star-filter-btn" onclick="setStarFilter(2, this)"><span class="s">★★</span> 普通</button>
         <button class="star-filter-btn" onclick="setStarFilter(1, this)"><span class="s">★</span> 要注意</button>
+      </div>
+      <!-- 並び替え -->
+      <div class="sort-bar">
+        <span class="sort-label">📋 並び順：</span>
+        <button class="sort-btn active" id="sortKana" onclick="setSort('kana',this)">あいうえお順</button>
+        <button class="sort-btn" id="sortAddr" onclick="setSort('addr',this)">📍 住所の近い順</button>
+        <button class="sort-btn" id="sortStars" onclick="setSort('stars',this)">⭐ 評価順</button>
       </div>
       <div class="cards-grid" id="cardsGrid"></div>
     </div>
@@ -1104,8 +1134,26 @@ function renderCards(list) {
     </div>`;
     return;
   }
-  const sorted = [...list].sort((a,b)=>(a.kana||a.name||'').localeCompare(b.kana||b.name||'','ja'));
-  grid.innerHTML = sorted.map(c => {
+
+  // ── 並び替え ──
+  let sorted;
+  if (currentSort === 'addr') {
+    // 都道府県→市区町村（あいうえお）→番地（数字）順
+    sorted = [...list].sort((a,b) => {
+      const pa = (a.pref||'未分類').localeCompare(b.pref||'未分類','ja');
+      if (pa !== 0) return pa;
+      const ca = (a.city||'未分類').localeCompare(b.city||'未分類','ja');
+      if (ca !== 0) return ca;
+      return extractStreetNum(a.street) - extractStreetNum(b.street);
+    });
+  } else if (currentSort === 'stars') {
+    sorted = [...list].sort((a,b) => (b.stars||0) - (a.stars||0));
+  } else {
+    sorted = [...list].sort((a,b) => (a.name||'').localeCompare(b.name||'','ja'));
+  }
+
+  // カードHTML生成
+  function cardHtml(c) {
     const n = c.stars||0;
     const last = c.logs&&c.logs.length ? [...c.logs].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
     const addr = [c.pref,c.city,c.street].filter(Boolean).join(' ');
@@ -1118,7 +1166,6 @@ function renderCards(list) {
     return `<div class="cust-card${isContracted?' contracted':''}" onclick="selectCustomer('${c.id}')">
       ${isContracted ? '<div class="contracted-ribbon">🏠 成約済み</div>' : ''}
       <div class="card-name">${c.name||'(名前なし)'}</div>
-      <div class="card-kana">${c.kana||'　'}</div>
       <div class="card-addr">${addr||'住所未登録'}</div>
       ${salesBadge ? '<div style="margin-bottom:6px;">'+salesBadge+'</div>' : ''}
       <div class="card-bottom">
@@ -1126,10 +1173,32 @@ function renderCards(list) {
         <div class="card-log">${last?'📅 '+fmtDate(last.date):''}</div>
       </div>
     </div>`;
-  }).join('');
+  }
+
+  // 住所順のときはグループヘッダーを表示
+  if (currentSort === 'addr') {
+    let html = '';
+    let lastGroup = null;
+    sorted.forEach(c => {
+      const grp = addrGroupKey(c);
+      if (grp !== lastGroup) {
+        // グループ区切り
+        html += `<div class="addr-group-header">
+          <span class="addr-group-label">📍 ${grp}</span>
+          <span class="addr-group-line"></span>
+        </div>`;
+        lastGroup = grp;
+      }
+      html += cardHtml(c);
+    });
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = sorted.map(cardHtml).join('');
+  }
 }
 
-let currentStarFilter = 0; // 0=すべて
+let currentStarFilter = 0;
+let currentSort = 'kana'; // 'kana' | 'addr' | 'stars'
 
 function setStarFilter(n, btn) {
   currentStarFilter = n;
@@ -1138,11 +1207,29 @@ function setStarFilter(n, btn) {
   filterCards();
 }
 
+function setSort(mode, btn) {
+  currentSort = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterCards();
+}
+
+// 番地から数字を抽出して並び順に使う
+function extractStreetNum(street) {
+  const m = (street||'').match(/(\d+)/);
+  return m ? parseInt(m[1]) : 9999;
+}
+
+// 住所グループ用キー（都道府県＋市区町村）
+function addrGroupKey(c) {
+  return (c.pref||'未分類') + '　' + (c.city||'未分類');
+}
+
 function filterCards() {
   const q = document.getElementById('cardSearch').value.trim().toLowerCase();
-  let list = customers;
+  let list = [...customers];
   if (q) list = list.filter(c =>
-    (c.name||'').includes(q)||(c.kana||'').includes(q)||(c.pref||'').includes(q)||
+    (c.name||'').includes(q)||(c.pref||'').includes(q)||
     (c.city||'').includes(q)||(c.street||'').includes(q)||(c.comment||'').includes(q)
   );
   if (currentStarFilter > 0) list = list.filter(c => (c.stars||0) === currentStarFilter);
