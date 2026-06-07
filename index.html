@@ -1525,46 +1525,75 @@ function delLog(id){ tempLogs=tempLogs.filter(l=>l.id!==id); redrawLogs(); }
 
 // ── Firebase ──
 function initFirebase(config){
-  let loaded=0;
-  ['https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
-   'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'].forEach(src=>{
+  // SDKを順番に読み込む（直列：app → database の順を保証）
+  const urls=[
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
+  ];
+  function loadNext(i){
+    if(i>=urls.length){connectFirebase(config);return;}
+    // すでに読み込み済みならスキップ
+    if(i===0&&typeof firebase!=='undefined'&&firebase.app){loadNext(i+1);return;}
     const s=document.createElement('script');
-    s.src=src;
-    s.onload=()=>{if(++loaded===2)connectFirebase(config);};
-    s.onerror=()=>showToast('Firebase SDKの読み込みに失敗','error');
+    s.src=urls[i];
+    s.onload=()=>loadNext(i+1);
+    s.onerror=()=>showToast('Firebase SDKの読み込みに失敗しました。ネット接続を確認してください。','error');
     document.head.appendChild(s);
-  });
+  }
+  loadNext(0);
 }
+
 function connectFirebase(config){
   try{
     if(!firebase.apps.length) firebase.initializeApp(config); else firebase.app();
-    fbRef=firebase.database().ref('customers_v2');
+    const db=firebase.database();
+    fbRef=db.ref('customers_v2');
+
+    // ── 接続状態の監視（切断を検知して画面に表示）──
+    db.ref('.info/connected').on('value',snap=>{
+      const connected=snap.val()===true;
+      const statusEl=document.getElementById('fbStatus');
+      if(connected){
+        if(statusEl){statusEl.textContent='🟢 リアルタイム同期中';statusEl.style.color='#3d7a5f';}
+      }else{
+        if(statusEl){statusEl.textContent='🟡 再接続中...';statusEl.style.color='#b08000';}
+      }
+    });
+
+    // ── データ受信 ──
     fbRef.on('value',snap=>{
       customers=snap.val()?Object.values(snap.val()):[];
       saveLocal();
       renderTree(customers);
-      // 詳細画面表示中も現在の顧客データをtempSales/tempLogsに反映
-      if(document.getElementById('detailView').classList.contains('visible') && currentId) {
-        const cur = customers.find(x=>x.id===currentId);
-        if(cur) {
-          tempLogs  = [...(cur.logs  || [])];
-          tempSales = [...(cur.sales || [])];
+      if(document.getElementById('detailView').classList.contains('visible')&&currentId){
+        const cur=customers.find(x=>x.id===currentId);
+        if(cur){
+          tempLogs=[...(cur.logs||[])];
+          tempSales=[...(cur.sales||[])];
           redrawLogs();
           redrawSales();
         }
-      } else {
+      }else{
         renderCards(customers);
       }
-      const sub=document.getElementById('welcomeSub'); if(sub) sub.textContent=`全 ${customers.length} 件`;
+      const sub=document.getElementById('welcomeSub');if(sub)sub.textContent=`全 ${customers.length} 件`;
       updateSalesBadge();
       updateVisitBadge();
+    },err=>{
+      // データ受信エラー時
+      showToast('Firebase同期エラー: '+err.message,'error');
+      document.getElementById('fbStatus').textContent='🔴 同期エラー';
+      document.getElementById('fbStatus').style.color='#c0392b';
     });
-    document.getElementById('fbStatus').textContent='🟢 リアルタイム同期中';
-    document.getElementById('fbStatus').style.color='#3d7a5f';
+
     document.getElementById('fbSetupArea').style.display='none';
     document.getElementById('fbConnectedArea').style.display='';
     showToast('✅ Firebaseに接続しました！','success');
-  }catch(e){showToast('Firebase接続失敗: '+e.message,'error');}
+  }catch(e){
+    showToast('Firebase接続失敗: '+e.message,'error');
+    document.getElementById('fbStatus').textContent='🔴 接続失敗';
+    document.getElementById('fbStatus').style.color='#c0392b';
+  }
 }
 function connectFB(){
   const config={
