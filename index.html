@@ -531,9 +531,61 @@ textarea { resize:vertical; min-height:78px; }
 .banner-right .welcome-title { font-family:'Shippori Mincho',serif; font-size:16px; font-weight:700; color:white; }
 .banner-right .btn-new-lg { background:var(--accent); border:none; }
 .banner-right .btn-new-lg:hover { background:var(--accent-light); }
+
+/* ── 通知バナー ── */
+#notifBanner {
+  display: none;
+  position: fixed; top: var(--topbar); left: 0; right: 0; z-index: 999;
+  background: linear-gradient(90deg, #1a472a, #2d6a4f);
+  color: #fff; padding: 10px 16px;
+  font-size: 13px; font-family: 'Noto Sans JP', sans-serif;
+  align-items: center; gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  cursor: pointer;
+  animation: slideDown .3s ease;
+}
+#notifBanner.show { display: flex; }
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+#notifBanner .notif-icon { font-size: 18px; flex-shrink: 0; }
+#notifBanner .notif-text { flex: 1; line-height: 1.4; }
+#notifBanner .notif-count {
+  background: #ff6b6b; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 12px; flex-shrink: 0;
+}
+#notifBanner .notif-close {
+  padding: 2px 8px; font-size: 16px; cursor: pointer;
+  opacity: .7; flex-shrink: 0;
+}
+#notifBanner .notif-close:hover { opacity: 1; }
+
+/* ── カードのNEWバッジ ── */
+.new-badge {
+  display: inline-block;
+  background: #ff4757; color: #fff;
+  font-size: 10px; font-weight: 800;
+  padding: 1px 6px; border-radius: 8px;
+  margin-left: 6px; vertical-align: middle;
+  letter-spacing: .04em;
+  animation: pulse .8s infinite alternate;
+}
+@keyframes pulse {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: .75; transform: scale(1.08); }
+}
 </style>
 </head>
 <body>
+<!-- 通知バナー -->
+<div id="notifBanner" onclick="markAllRead()">
+  <span class="notif-icon">🔔</span>
+  <span class="notif-text" id="notifText">新しい更新があります</span>
+  <span class="notif-count" id="notifCount">0</span>
+  <span class="notif-close" onclick="event.stopPropagation();hideNotifBanner()">✕</span>
+</div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -1057,6 +1109,15 @@ let tempLogs     = [];
 let sidebarOpen  = true;
 let fbRef        = null;
 
+// ── 通知機能 ──
+const DEVICE_ID = localStorage.getItem('deviceId') || (()=>{
+  const id='dev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  localStorage.setItem('deviceId',id); return id;
+})();
+let notifRef     = null;
+let readNotifIds = new Set(JSON.parse(localStorage.getItem('readNotifIds')||'[]'));
+let unreadNotifs = [];
+
 const STAR_LABELS  = ['','★ 要注意','★★ 普通','★★★ 良好','★★★★ 優良','★★★★★ 最優良'];
 const KYUSHU_PREFS = ['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県'];
 const PREFS_ORDER  = ['福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','未分類'];
@@ -1440,7 +1501,11 @@ function saveCustomer() {
   updateSalesBadge();
   updateVisitBadge();
 
-  if (fbRef) fbRef.child(data.id).set(data);
+  if (fbRef) {
+    fbRef.child(data.id).set(data);
+    // 通知をFirebaseに書き込む
+    pushNotif(isNew ? '新規顧客登録' : '顧客情報更新', data.name, data.id);
+  }
 
   document.getElementById('deleteBtn').style.display='';
   document.getElementById('updateBtn').style.display='';
@@ -1520,79 +1585,74 @@ function addLog(){
   tempLogs.push({id:genId(),date,note:document.getElementById('logNote').value.trim()});
   document.getElementById('logNote').value='';
   redrawLogs();
+  // 訪問ログ追加通知（Firebase接続中のみ・顧客名取得）
+  if(fbRef && currentId){
+    const c=customers.find(x=>x.id===currentId);
+    if(c) pushNotif('訪問ログ追加', c.name, currentId);
+  }
 }
 function delLog(id){ tempLogs=tempLogs.filter(l=>l.id!==id); redrawLogs(); }
 
 // ── Firebase ──
 function initFirebase(config){
-  // SDKを順番に読み込む（直列：app → database の順を保証）
   const urls=[
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
     'https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'
   ];
   function loadNext(i){
     if(i>=urls.length){connectFirebase(config);return;}
-    // すでに読み込み済みならスキップ
     if(i===0&&typeof firebase!=='undefined'&&firebase.app){loadNext(i+1);return;}
     const s=document.createElement('script');
     s.src=urls[i];
     s.onload=()=>loadNext(i+1);
-    s.onerror=()=>showToast('Firebase SDKの読み込みに失敗しました。ネット接続を確認してください。','error');
+    s.onerror=()=>showToast('Firebase SDKの読み込みに失敗しました','error');
     document.head.appendChild(s);
   }
   loadNext(0);
 }
-
 function connectFirebase(config){
   try{
     if(!firebase.apps.length) firebase.initializeApp(config); else firebase.app();
     const db=firebase.database();
     fbRef=db.ref('customers_v2');
 
-    // ── 接続状態の監視（切断を検知して画面に表示）──
+    // 接続状態監視
     db.ref('.info/connected').on('value',snap=>{
-      const connected=snap.val()===true;
-      const statusEl=document.getElementById('fbStatus');
-      if(connected){
-        if(statusEl){statusEl.textContent='🟢 リアルタイム同期中';statusEl.style.color='#3d7a5f';}
+      const el=document.getElementById('fbStatus');
+      if(snap.val()===true){
+        if(el){el.textContent='🟢 リアルタイム同期中';el.style.color='#3d7a5f';}
       }else{
-        if(statusEl){statusEl.textContent='🟡 再接続中...';statusEl.style.color='#b08000';}
+        if(el){el.textContent='🟡 再接続中...';el.style.color='#b08000';}
       }
     });
 
-    // ── データ受信 ──
+    // 顧客データ受信
     fbRef.on('value',snap=>{
       customers=snap.val()?Object.values(snap.val()):[];
       saveLocal();
       renderTree(customers);
       if(document.getElementById('detailView').classList.contains('visible')&&currentId){
         const cur=customers.find(x=>x.id===currentId);
-        if(cur){
-          tempLogs=[...(cur.logs||[])];
-          tempSales=[...(cur.sales||[])];
-          redrawLogs();
-          redrawSales();
-        }
-      }else{
-        renderCards(customers);
-      }
+        if(cur){tempLogs=[...(cur.logs||[])];tempSales=[...(cur.sales||[])];redrawLogs();redrawSales();}
+      }else{renderCards(customers);}
       const sub=document.getElementById('welcomeSub');if(sub)sub.textContent=`全 ${customers.length} 件`;
-      updateSalesBadge();
-      updateVisitBadge();
+      updateSalesBadge();updateVisitBadge();
     },err=>{
-      // データ受信エラー時
       showToast('Firebase同期エラー: '+err.message,'error');
-      document.getElementById('fbStatus').textContent='🔴 同期エラー';
-      document.getElementById('fbStatus').style.color='#c0392b';
+      const el=document.getElementById('fbStatus');
+      if(el){el.textContent='🔴 同期エラー';el.style.color='#c0392b';}
     });
+
+    // ── 通知監視開始 ──
+    startNotifWatch(db);
 
     document.getElementById('fbSetupArea').style.display='none';
     document.getElementById('fbConnectedArea').style.display='';
     showToast('✅ Firebaseに接続しました！','success');
   }catch(e){
     showToast('Firebase接続失敗: '+e.message,'error');
-    document.getElementById('fbStatus').textContent='🔴 接続失敗';
-    document.getElementById('fbStatus').style.color='#c0392b';
+    const el=document.getElementById('fbStatus');
+    if(el){el.textContent='🔴 接続失敗';el.style.color='#c0392b';}
   }
 }
 function connectFB(){
@@ -1608,12 +1668,88 @@ function connectFB(){
 }
 function disconnectFB(){
   if(fbRef){fbRef.off();fbRef=null;}
+  if(notifRef){notifRef.off();notifRef=null;}
   localStorage.removeItem('fb_config');
   document.getElementById('fbStatus').textContent='⚫ 未接続（ローカル保存）';
   document.getElementById('fbStatus').style.color='';
   document.getElementById('fbSetupArea').style.display='';
   document.getElementById('fbConnectedArea').style.display='none';
   showToast('🔌 Firebaseを切断しました','success');
+}
+
+// ── 通知機能 ──
+function pushNotif(type, custName, custId){
+  if(!notifRef) return;
+  notifRef.push({type, custName, custId, deviceId:DEVICE_ID, ts:Date.now()});
+  // 30件超えたら古い通知を削除
+  notifRef.once('value', snap=>{
+    if(!snap.exists()) return;
+    const keys=Object.keys(snap.val()||{}).sort();
+    if(keys.length>30) keys.slice(0,keys.length-30).forEach(k=>notifRef.child(k).remove());
+  });
+}
+
+function startNotifWatch(db){
+  notifRef=db.ref('notifications');
+  const startTime=Date.now();
+  notifRef.on('child_added', snap=>{
+    const n=snap.val(); if(!n) return;
+    // 接続直前の古い通知は無視
+    if(n.ts < startTime-3000) return;
+    // 自分の操作は通知しない
+    if(n.deviceId===DEVICE_ID) return;
+    // 既読済みは無視
+    if(readNotifIds.has(snap.key)) return;
+    unreadNotifs.push({key:snap.key,...n});
+    updateNotifBanner();
+    updateNewBadge(n.custId, true);
+  });
+}
+
+function updateNotifBanner(){
+  const banner=document.getElementById('notifBanner');
+  const countEl=document.getElementById('notifCount');
+  const textEl=document.getElementById('notifText');
+  if(!unreadNotifs.length){banner.classList.remove('show');return;}
+  countEl.textContent=unreadNotifs.length+'件';
+  const latest=unreadNotifs[unreadNotifs.length-1];
+  const label={
+    '新規顧客登録':'✨ 新規顧客が登録されました',
+    '顧客情報更新':'📝 顧客情報が更新されました',
+    '訪問ログ追加':'🚗 訪問ログが追加されました'
+  }[latest.type]||'🔔 更新があります';
+  textEl.textContent=`${label}：${latest.custName}（タップで確認）`;
+  banner.classList.add('show');
+}
+
+function hideNotifBanner(){
+  document.getElementById('notifBanner').classList.remove('show');
+}
+
+function markAllRead(){
+  unreadNotifs.forEach(n=>readNotifIds.add(n.key));
+  localStorage.setItem('readNotifIds',JSON.stringify([...readNotifIds]));
+  unreadNotifs=[];
+  hideNotifBanner();
+  document.querySelectorAll('.new-badge').forEach(el=>el.remove());
+}
+
+function updateNewBadge(custId, add){
+  // カードグリッドのNEWバッジ
+  document.querySelectorAll('.cust-card').forEach(card=>{
+    if(!(card.getAttribute('onclick')||'').includes(custId)) return;
+    const nameEl=card.querySelector('.card-name'); if(!nameEl) return;
+    const ex=nameEl.querySelector('.new-badge');
+    if(add && !ex){const b=document.createElement('span');b.className='new-badge';b.textContent='NEW';nameEl.appendChild(b);}
+    else if(!add && ex) ex.remove();
+  });
+  // サイドバーツリーのNEWバッジ
+  document.querySelectorAll('.tree-item').forEach(item=>{
+    if(!(item.getAttribute('onclick')||'').includes(custId)) return;
+    const ex=item.querySelector('.new-badge');
+    if(add && !ex){const b=document.createElement('span');b.className='new-badge';b.textContent='NEW';item.appendChild(b);}
+    else if(!add && ex) ex.remove();
+  });
 }
 
 // ── 成約バッジ更新 ──
