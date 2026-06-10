@@ -1364,7 +1364,7 @@ function renderVisitCards() {
       ? 'border-color:#f0a040;background:linear-gradient(135deg,#fffbf0,#fff3e0);'
       : 'border-color:#81c784;background:linear-gradient(135deg,#f8fff8,#f0fff4);';
     const ribbonText = isTry ? '🔔 訪問してみて欲しい' : '✅ 訪問可';
-    return `<div class="cust-card" style="${cardStyle}" onclick="selectCustomer('${c.id}');switchTab('list')">
+    return `<div class="cust-card" style="${cardStyle}" onclick="selectCustomer('${c.id}')">
       <div class="contracted-ribbon" style="${ribbonStyle}">${ribbonText}</div>
       <div class="card-name">${c.name||'(名前なし)'}</div>
       <div class="card-addr">${addr||'住所未登録'}</div>
