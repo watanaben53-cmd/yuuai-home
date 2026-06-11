@@ -1,14 +1,10 @@
 // =====================
-// 優愛ホーム 経費管理アプリ Service Worker
+// 優愛ホーム 顧客管理アプリ Service Worker
 // バージョンを変えるたびにキャッシュが更新されます
 // =====================
-const CACHE_VERSION = 'keihi-v1.0.0';
+const CACHE_VERSION = 'yuuai-customer-v1.0.0';
 const CACHE_FILES = [
-  './keihi.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  './apple-touch-icon.png'
+  './index.html'
 ];
 
 // インストール時：キャッシュを作成
@@ -18,6 +14,7 @@ self.addEventListener('install', event => {
       return cache.addAll(CACHE_FILES);
     })
   );
+  self.skipWaiting();
 });
 
 // アクティベート時：古いキャッシュを削除
@@ -35,10 +32,12 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  // Firebase・Anthropic APIはキャッシュしない
+  // Firebase・外部APIはキャッシュしない
   if (url.hostname.includes('firebase') ||
+      url.hostname.includes('firebaseio') ||
       url.hostname.includes('anthropic') ||
-      url.hostname.includes('gstatic')) {
+      url.hostname.includes('gstatic') ||
+      url.hostname.includes('googleapis')) {
     return;
   }
   event.respondWith(
